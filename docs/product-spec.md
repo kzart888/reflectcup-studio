@@ -2,15 +2,24 @@
 
 ## Customer outcome
 
-A customer can create a design without an account, upload a personal image, choose the portion visible in the reflective coverage mask, inspect a physically honest 3D preview, leave and securely resume, then confirm an immutable design.
+A customer can create a design without an account, upload a personal image, choose the portion visible in the validated reflective core contour, inspect a physically honest 3D preview, choose a preview environment, leave and securely resume, then confirm an immutable design.
 
-Desktop uses a crop/preview split layout. Mobile uses two task-focused views: **Adjust image** and **View reflection**. The primary action is **Confirm design**. With one published profile, cup selection is hidden.
+Desktop uses a crop/preview split layout. Mobile uses two task-focused views: **Adjust image** and **View reflection**. The primary action is **Confirm design**. The compact scene selector sits beside **Best view**. Cup-profile selection remains hidden while the product offers only one current customer cup; the nominal profile stays available solely to reproduce old sessions and tests.
 
 ## MVP scope
 
-Implemented: one nominal cup, one neutral scene, identity mapped style, transparent unmapped fill, design sessions, administrator access and a test production bundle.
+Implemented:
 
-Not implemented: AI disguise/styling, automatic background fill, Shopify deposit/full payment, fulfilment, customer accounts and additional scene downloads. Disabled capabilities are not displayed.
+- immutable nominal-v1 regression and curved-cup-v2 digital optical profiles; a fresh seed selects v2 for new sessions;
+- a curved mirror cup with ceramic inner wall/base/handle and a solid ceramic dish display model;
+- vector reflection-area highlighting based on the v2 invertible core region, with the false top island removed;
+- selected warm Craftsman interior option 1 (the new-session default), forest camp option 2, and a neutral optical studio;
+- identity mapped style, transparent unmapped fill, design sessions, administrator access and a test production bundle;
+- an internal non-AI style comparison lab that is not connected to customer saves or exports.
+
+Not implemented: AI disguise/styling, customer-facing deterministic styles, automatic background fill, Shopify deposit/full payment, fulfilment and customer accounts. The target Blender/Cycles + GLB/Meshopt + KTX2 + matched 360° panorama scene pipeline is also not complete; the current scenes use procedural geometry and CC0 HDR/JPEG/PNG assets. Disabled capabilities are not displayed.
+
+Scene selection is presentation-only. It autosaves with the same revision lock as crop/camera and its ID/version/checksum are frozen into confirmation, but it cannot alter optical mapping, canonical render or the production PNG.
 
 ## Session lifecycle
 

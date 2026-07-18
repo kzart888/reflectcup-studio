@@ -8,13 +8,19 @@ ReflectCup Studio is an open-source web customizer for mirror-anamorphic cups. A
 
 - Image upload, orientation/metadata normalization, pan and zoom crop
 - Shared optical LUT for interactive preview and authoritative server rendering
-- WebGL2 cup reflection with a fixed optical centre and honest off-axis distortion
+- Curved-cup v2 geometry derived from audited measurements, with a crisp vector reflection-area contour that excludes the disconnected top island
+- WebGL2 cup reflection with a fixed optical centre, PMREM environment response and honest off-axis distortion
+- Switchable warm Craftsman home, forest camp and neutral optical-studio previews; the choice autosaves and is frozen into confirmation
+- Lightweight procedural near/mid scenery, CC0 HDR/PBR assets and offline-generated soft table shadow/contact AO, without runtime shadow maps
 - Anonymous, resumable design sessions with optimistic autosave
 - Administrator roles, versioned optical profiles and audited settings
 - 1024 preview and 4096 test-production bundle
-- Extension seams for additional cups, scenes, style, fill and commerce providers
+- An internal deterministic non-AI style lab for mosaic, halftone and dithering research
+- Extension seams for additional cups, style, fill and commerce providers
 
-AI hidden-image generation, payments and production fulfilment are deliberately disabled in this version.
+AI hidden-image generation, customer-facing style controls, payments and production fulfilment are deliberately disabled in this version. Scene choice affects only the 3D proof and confirmation provenance; it never changes the LUT or production PNG.
+
+On a fresh database, `pnpm db:seed` publishes immutable `nominal-v1` and then `curved-cup-v2`, making v2 the most recently published profile selected for new sessions. Existing sessions retain their original profile, version and checksum. New sessions default to the selected **warm Craftsman home option 1**; **forest camp option 2** and the neutral optical studio remain selectable.
 
 ## Local setup
 
@@ -24,7 +30,7 @@ Requirements: Node.js 24+, pnpm 10+, a WebGL2 browser, and PostgreSQL 16 (Docker
 2. Run `pnpm local:up`.
 3. Run `pnpm db:migrate` and `pnpm db:seed`.
 4. Run `pnpm admin:create -- --email owner@example.com` and store the one-time password securely.
-5. Run `pnpm profile:generate` and `pnpm calibration:generate`.
+5. Optionally reproduce public fixtures with `pnpm profile:generate -- --profile nominal-v1`, `pnpm profile:generate -- --profile curved-cup-v2`, `pnpm calibration:generate` and `pnpm scene:bake`.
 6. Run `pnpm dev` and, in a second terminal, `pnpm worker:production`. Open the customer studio at `http://127.0.0.1:3000/studio/new` or the administrator login at `http://127.0.0.1:3000/admin/login`.
 
 If Docker Desktop is unavailable on Windows, `pnpm local:postgres` starts the bundled/local PostgreSQL 16 workspace cluster on port 54329; then run the same migration and seed commands.
@@ -35,10 +41,16 @@ Schedule `pnpm maintenance:expire` daily and `pnpm maintenance:storage` frequent
 
 Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm worker:build`, `pnpm build`, `pnpm test:e2e` and `pnpm audit --prod` before release. See `docs/` for the optical coordinate contract, security model and acceptance tests.
 
+## Scene asset status
+
+The shipped scene runtime uses Three.js-authored geometry, JPEG PBR maps, equirectangular HDR environments, PMREM and deterministic PNG shadow/AO layers. The selected concept frames under `docs/assets/scenes/concepts/` are visual references only and are never used as fake panoramic backgrounds.
+
+Blender and `toktx`/glTF compression tooling were unavailable in the implementation environment. Consequently the planned Blender/Cycles lightmaps, UV2 GLB/Meshopt packages, KTX2 textures and same-scene 360° panorama/HDR pairs are a staged pipeline, not a shipped capability. The catalog includes 2K high-tier HDR files, but the current runtime intentionally starts from 1K environments and does not yet perform an idle 2K upgrade. See `docs/scene-assets.md` and `docs/realtime-preview.md`.
+
 ## Private calibration boundary
 
 The public repository contains only a synthetic profile and generic engine. Historic Rhino/Grasshopper exports, real calibration maps, customer photographs, production files, research PDFs and local runtime data remain ignored. `docs/legacy-assets.md` records this boundary without publishing the assets.
 
 ## License
 
-Apache-2.0. The bundled Studio Small 08 environment is a CC0 asset by Poly Haven; see its adjacent provenance file.
+Apache-2.0. Bundled environment and material assets are CC0 Poly Haven resources; see `docs/scene-assets.md` and the Studio Small 08 adjacent provenance file.

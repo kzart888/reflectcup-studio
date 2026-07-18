@@ -14,11 +14,34 @@ Production jobs use PostgreSQL as the durable queue. The child atomically change
 
 Large binaries are never stored in JSONB or base64. Session updates carry an expected revision and atomically increment it. Published profile/settings versions are referenced by ID, version and checksum rather than copied from mutable defaults.
 
-Scenes use a server-owned published catalog. The currently published IDs are `studio-neutral`, `warm-craftsman-home` and `forest-camp-evening`, each at version 1. New sessions default to `warm-craftsman-home`; changing the database default does not rewrite existing session rows. Scene changes use the same optimistic revision lock as crop and camera updates. Confirmation freezes `sceneId`, `sceneVersion` and `sceneChecksum` into the immutable design snapshot, while canonical plate-render and production-job inputs remain scene-independent.
+## Profile selection
+
+New sessions bind to the newest published optical profile at creation time. A fresh seed installs immutable `nominal-v1` first and `curved-cup-v2` second, so the curved profile is selected on a fresh database. This is not a mutable global pointer: an existing session continues to resolve its stored profile ID even after another version is published. The original nominal fixture remains byte-for-byte regression evidence.
+
+## Scene runtime
+
+Scenes use a server-owned published catalog. The currently published IDs are `studio-neutral`, `warm-craftsman-home` and `forest-camp-evening`, each at version 1. The selected customer directions are warm Craftsman interior option 1 and forest camp option 2. New sessions default to `warm-craftsman-home`; changing the database default does not rewrite existing session rows.
+
+The browser keeps optical content and scenery separated:
+
+- `ReflectiveCupPreview` owns the cup, dish, source texture, crop, LUT, analytic dish intersection and profile-derived geometry.
+- `SceneBackdrop` owns the table and near/mid scenery. The home currently models a wall/window, built-in bench, cushions and cabinet; the forest models an outdoor table, instanced trunks, ground, tent and chair.
+- The scene catalog owns environment orientation, light values, quality resources, download estimates and offline shadow placement.
+- Equirectangular HDR is used both as the visible far background where applicable and as the input to PMREM for the metal cup. A single non-shadowing hero light supplies a stable highlight.
+
+Before switching, the UI fetches the target scene's low-tier assets. The old scene remains visible until that preload succeeds; failure leaves it selected and shows an error. The selector is disabled during the current preload. The successful choice enters the same 650 ms optimistic autosave as crop and camera. Confirmation freezes `sceneId`, `sceneVersion` and `sceneChecksum` into the immutable design snapshot, while canonical plate renders and production-job inputs remain scene-independent.
+
+The current scene checksum is the SHA-256 of the published scene identity/version contract. It is not yet a content hash over every HDR, texture and mesh. Until a content-addressed asset manifest is added, any asset-visible change must bump the scene version and update both server and customer catalogs; silently replacing a file would defeat snapshot provenance.
+
+### Current and staged asset boundaries
+
+The shipped implementation uses React Three Fiber geometry, JPEG PBR textures, Radiance HDR environments and 1024 px deterministic PNG shadow/AO decals. The shadow generator is an offline TypeScript/Sharp task (`pnpm scene:bake`); there is no runtime shadow map, SSAO, SSR or volumetric pass. Concept images are committed only as design references and are not rendered as panoramic scenery.
+
+Blender and `toktx`/glTF compression tools were unavailable in the implementation environment. The intended Blender/Cycles bake, UV2 lightmaps, GLB/Meshopt geometry, KTX2 texture sets, and matched same-scene 360° panorama/HDR export are therefore staged architecture rather than completed assets. The 2K HDR files declared by the high tier are present, but the live renderer currently uses the low-tier 1K environment and does not idle-upgrade to 2K. See `docs/scene-assets.md` for provenance and `docs/realtime-preview.md` for runtime budgets.
 
 ## Provider seams
 
-- `ScenePlugin`: background, environment, lights, optional props and quality resources.
-- `StyleProvider`: transforms mapped content; MVP is `identity`.
+- Scene descriptors and `SceneBackdrop`: published identity, background, PMREM input, fixed lights, procedural props and quality resources. The older generic `ScenePlugin` contract remains an extension seam, not the active loader implementation.
+- `StyleProvider`: customer sessions remain `identity`. A separate full-image provider contract and deterministic mosaic/halftone/dither implementations exist in `src/rendering/styles` for the internal style lab only.
 - `FillProvider`: supplies unmapped content; MVP is transparent `none`.
 - `CommerceProvider`: creates checkout and handles provider events; disabled in MVP.
