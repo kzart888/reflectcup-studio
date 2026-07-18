@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "profileId": "nominal-cup-80-dish-182-v1",
+  "profileVersion": 1,
+  "files": {
+    "profile.json": {
+      "bytes": 1372,
+      "sha256": "5507602fba838ce53f16cf171687a34ee6a6632bbae167356873bfd5a6f65549",
+      "format": "application/json"
+    },
+    "plate-to-target.rg32f": {
+      "bytes": 2097152,
+      "sha256": "236e357e78b226809eac29a4c85bd3dc31919a646c3f5ddb302900b04bd6652a",
+      "format": "RG32F little-endian"
+    },
+    "plate-valid-mask.bin": {
+      "bytes": 262144,
+      "sha256": "e226e9c886fb9ae2df7f7d40434f3dec9f2c1c44bedb179dccb3ef347d0c9058",
+      "format": "R8"
+    },
+    "plate-valid-mask.png": {
+      "bytes": 3925,
+      "sha256": "30b7499c5b60210231b3fcf59c8132a7244abebec3802014e656668d36bf44b8",
+      "format": "image/png"
+    },
+    "target-valid-mask.png": {
+      "bytes": 503,
+      "sha256": "4a216223a707b3ed89080098b4e0fb27a1568d03ab283b7fe8edb67794fe8d53",
+      "format": "image/png"
+    }
+  }
+}

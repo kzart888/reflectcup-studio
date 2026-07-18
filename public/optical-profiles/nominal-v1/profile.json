@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "id": "nominal-cup-80-dish-182-v1",
+  "slug": "nominal-cup-80-dish-182",
+  "label": "Nominal 80 mm cup / 182 mm dish",
+  "version": 1,
+  "status": "published",
+  "units": "metres",
+  "coordinateSystem": {
+    "handedness": "right",
+    "upAxis": "+Y",
+    "platePlane": "XZ",
+    "printUv": "+X,-Z"
+  },
+  "dish": {
+    "radius": 0.0912462,
+    "sag": 0.01,
+    "sphereRadius": 0.4212935,
+    "center": [
+      0,
+      0,
+      0
+    ]
+  },
+  "cup": {
+    "axisOrigin": [
+      -0.03,
+      0,
+      0
+    ],
+    "radialProfile": [
+      {
+        "y": 0.00107,
+        "radius": 0.04
+      },
+      {
+        "y": 0.07307,
+        "radius": 0.04
+      }
+    ]
+  },
+  "designCamera": {
+    "position": [
+      0.6,
+      0.48,
+      0
+    ],
+    "target": [
+      -0.03,
+      0.043,
+      0
+    ],
+    "up": [
+      0,
+      1,
+      0
+    ],
+    "verticalFovDegrees": 35,
+    "targetFrame": {
+      "center": [
+        0.01,
+        0.04,
+        0
+      ],
+      "width": 0.084,
+      "height": 0.076
+    }
+  },
+  "mapping": {
+    "targetSamples": [
+      129,
+      129
+    ],
+    "lutSize": [
+      512,
+      512
+    ],
+    "maxPlateEdge": 0.008,
+    "generatorVersion": "nominal-raytrace-v1"
+  },
+  "checksums": {
+    "geometry": "191d50e4e082bf97",
+    "generator": "d9d2804fa7f2a207",
+    "lut": "96fb6d50e3b833025d5434968621efc6"
+  }
+}

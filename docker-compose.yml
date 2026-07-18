@@ -1,0 +1,19 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: reflectcup
+      POSTGRES_USER: reflectcup
+      POSTGRES_PASSWORD: reflectcup
+    ports:
+      - "127.0.0.1:54329:5432"
+    volumes:
+      - reflectcup-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reflectcup -d reflectcup"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  reflectcup-postgres:

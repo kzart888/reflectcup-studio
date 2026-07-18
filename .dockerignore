@@ -1,0 +1,20 @@
+node_modules
+.next
+dist
+.git
+.env*
+!.env.example
+data
+storage
+private
+!src/storage
+!src/storage/**
+cat_transform_project
+python
+*.blend*
+*.pdf
+qrcode monster.json
+倒影杯_产品可行性与技术运营完整建议_2026-07-12.md
+倒影杯_LookingGlass论文分析与自动化定制技术路线_2026-07-13.md
+playwright-report
+test-results
