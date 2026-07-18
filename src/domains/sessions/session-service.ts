@@ -16,6 +16,11 @@ import { DEFAULT_CROP, MAX_INPUT_PIXELS, MAX_UPLOAD_BYTES } from "@/lib/constant
 import { ApiError } from "@/domains/auth/http";
 import { sha256, stableJson } from "@/domains/auth/security";
 import { validateStoredOpticalProfile } from "@/domains/profiles/profile-service";
+import {
+  DEFAULT_SCENE_ID,
+  findPublishedScene,
+  type PublishedSceneId
+} from "@/domains/scenes/catalog";
 import { getPreviewRuntimeSettings } from "@/domains/settings/runtime-settings";
 import {
   CONFIRMED_ACCESS_TTL_SECONDS,
@@ -40,6 +45,7 @@ export type SessionPatch = {
   revision: number;
   crop?: CropTransform;
   camera?: CameraState;
+  sceneId?: PublishedSceneId;
 };
 
 const SESSION_CREATION_ACTION = "preview_session.created";
@@ -186,6 +192,7 @@ export async function createSession(profileId: string | undefined, ipHash: strin
       .insert(previewSessions)
       .values({
         opticalProfileId: profile.id,
+        sceneId: DEFAULT_SCENE_ID,
         crop: DEFAULT_CROP,
         camera: {
           position: profileDocument.designCamera.position,
@@ -234,11 +241,14 @@ export async function patchSession(id: string, patch: SessionPatch) {
   const canonicalCamera = patch.camera && profileDocument
     ? constrainCamera(patch.camera, profileDocument.designCamera.target, profileDocument.designCamera.position)
     : undefined;
+  const scene = patch.sceneId ? findPublishedScene(patch.sceneId) : undefined;
+  if (patch.sceneId && !scene) throw new ApiError(400, "INVALID_SCENE_ID", "The requested scene is not published");
   const [row] = await getDatabase()
     .update(previewSessions)
     .set({
       crop: canonicalCrop,
       camera: canonicalCamera,
+      sceneId: scene?.id,
       revision: sql`${previewSessions.revision} + 1`,
       expiresAt: new Date(Date.now() + DRAFT_RETENTION_MS),
       updatedAt: new Date()
@@ -426,6 +436,8 @@ export async function confirmSession(id: string, revision: number) {
     const profile = await transaction.query.opticalProfiles.findFirst({ where: eq(opticalProfiles.id, row.opticalProfileId) });
     if (!profile) throw new ApiError(500, "PROFILE_MISSING", "The session optical profile is missing");
     const profileDocument = parseOpticalProfile(profile.profile);
+    const scene = findPublishedScene(row.sceneId);
+    if (!scene) throw new ApiError(409, "SCENE_NOT_PUBLISHED", "The selected scene is no longer published");
 
     const design = {
       previewSessionId: row.id,
@@ -442,7 +454,9 @@ export async function confirmSession(id: string, revision: number) {
       },
       crop: row.crop,
       camera: row.camera,
-      sceneId: row.sceneId,
+      sceneId: scene.id,
+      sceneVersion: scene.version,
+      sceneChecksum: scene.checksum,
       sourceAssetId: row.sourceAssetId,
       previewAssetId: row.previewAssetId,
       styleStrategy: row.styleStrategy,

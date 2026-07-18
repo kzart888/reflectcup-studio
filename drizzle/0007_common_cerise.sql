@@ -1,0 +1,1 @@
+ALTER TABLE "preview_sessions" ALTER COLUMN "scene_id" SET DEFAULT 'warm-craftsman-home';

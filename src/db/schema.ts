@@ -149,7 +149,7 @@ export const previewSessions = pgTable(
     opticalProfileId: uuid("optical_profile_id")
       .notNull()
       .references(() => opticalProfiles.id, { onDelete: "restrict" }),
-    sceneId: text("scene_id").notNull().default("studio-neutral"),
+    sceneId: text("scene_id").notNull().default("warm-craftsman-home"),
     crop: jsonb("crop").$type<{ centerX: number; centerY: number; scale: number }>().notNull(),
     camera: jsonb("camera")
       .$type<{ position: readonly [number, number, number]; target: readonly [number, number, number] }>()

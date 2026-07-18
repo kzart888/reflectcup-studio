@@ -40,6 +40,7 @@ import {
 import { runProductionJobThread } from "@/domains/artifacts/production-thread-runner";
 import { authenticateAdmin, loginAdmin } from "@/domains/auth/admin-service";
 import { validateOpticalProfileCandidate } from "@/domains/profiles/profile-service";
+import { findPublishedScene } from "@/domains/scenes/catalog";
 import { confirmSession, patchSession, uploadSource } from "@/domains/sessions/session-service";
 import { expireStaleSessions } from "@/domains/sessions/retention-service";
 import { sessionCookieName } from "@/domains/sessions/access-service";
@@ -449,6 +450,92 @@ describe("backend customer flow", () => {
     expect(await getDatabase().query.renderJobs.findFirst({ where: eq(renderJobs.id, staleJob.id) }))
       .toMatchObject({ status: "running", input: expect.objectContaining({ leaseToken: "new-lease" }) });
   }, 60_000);
+
+  it("persists only published scenes with optimistic locking and freezes scene provenance", async () => {
+    const createResponse = await createSessionRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions`, {
+        method: "POST",
+        headers: { origin, "content-type": "application/json", "x-forwarded-for": "198.51.100.67" },
+        body: "{}"
+      })
+    );
+    expect(createResponse.status).toBe(201);
+    const createBody = (await createResponse.json()) as {
+      data: { session: { id: string; revision: number; sceneId: string } };
+    };
+    const sessionId = createBody.data.session.id;
+    createdSessionIds.push(sessionId);
+    expect(createBody.data.session).toMatchObject({ revision: 0, sceneId: "warm-craftsman-home" });
+    const cookieName = sessionCookieName(sessionId);
+    const editorToken = cookieValue(createResponse.headers.get("set-cookie") ?? "", cookieName);
+    const sessionHeaders = { cookie: `${cookieName}=${editorToken}` };
+
+    const saved = await patchSessionRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { ...sessionHeaders, origin, "content-type": "application/json" },
+        body: JSON.stringify({ revision: 0, sceneId: "forest-camp-evening" })
+      }),
+      { params: Promise.resolve({ id: sessionId }) }
+    );
+    expect(saved.status).toBe(200);
+    expect((await saved.json()).data.session).toMatchObject({ revision: 1, sceneId: "forest-camp-evening" });
+
+    const refreshed = await getSessionRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, { headers: sessionHeaders }),
+      { params: Promise.resolve({ id: sessionId }) }
+    );
+    expect(refreshed.status).toBe(200);
+    expect((await refreshed.json()).data.session).toMatchObject({ revision: 1, sceneId: "forest-camp-evening" });
+
+    const invalid = await patchSessionRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { ...sessionHeaders, origin, "content-type": "application/json" },
+        body: JSON.stringify({ revision: 1, sceneId: "unpublished-scene" })
+      }),
+      { params: Promise.resolve({ id: sessionId }) }
+    );
+    expect(invalid.status).toBe(400);
+    expect((await invalid.json()).error.code).toBe("VALIDATION_FAILED");
+
+    const conflict = await patchSessionRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, {
+        method: "PATCH",
+        headers: { ...sessionHeaders, origin, "content-type": "application/json" },
+        body: JSON.stringify({ revision: 0, sceneId: "studio-neutral" })
+      }),
+      { params: Promise.resolve({ id: sessionId }) }
+    );
+    expect(conflict.status).toBe(409);
+    expect((await conflict.json()).error.code).toBe("REVISION_CONFLICT");
+
+    const source = await sharp({
+      create: { width: 24, height: 24, channels: 3, background: { r: 90, g: 140, b: 40 } }
+    }).png().toBuffer();
+    const uploaded = await uploadSource(sessionId, new File([source], "scene-test.png", { type: "image/png" }));
+    const rendered = await createPreviewRender(sessionId, uploaded.row.revision);
+    const temporarilyChanged = await patchSession(sessionId, {
+      revision: rendered.session.revision,
+      sceneId: "studio-neutral"
+    });
+    expect(temporarilyChanged.previewAssetId).toBe(rendered.asset.id);
+    const restored = await patchSession(sessionId, {
+      revision: temporarilyChanged.revision,
+      sceneId: "forest-camp-evening"
+    });
+    expect(restored.previewAssetId).toBe(rendered.asset.id);
+    const confirmed = await confirmSession(sessionId, restored.revision);
+    const publishedScene = findPublishedScene("forest-camp-evening")!;
+    expect(confirmed.snapshot.design).toMatchObject({
+      sceneId: publishedScene.id,
+      sceneVersion: publishedScene.version,
+      sceneChecksum: publishedScene.checksum
+    });
+    expect(confirmed.snapshot.checksum).toMatch(/^[0-9a-f]{64}$/);
+    const productionJob = await queueProductionBundle(confirmed.snapshot.id, testAdminId);
+    expect(productionJob.input).toEqual({ size: 4096, actorAdminUserId: testAdminId });
+  });
 
   it("rejects cross-origin session creation", async () => {
     const response = await createSessionRoute(

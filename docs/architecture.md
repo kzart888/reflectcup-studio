@@ -14,6 +14,8 @@ Production jobs use PostgreSQL as the durable queue. The child atomically change
 
 Large binaries are never stored in JSONB or base64. Session updates carry an expected revision and atomically increment it. Published profile/settings versions are referenced by ID, version and checksum rather than copied from mutable defaults.
 
+Scenes use a server-owned published catalog. The currently published IDs are `studio-neutral`, `warm-craftsman-home` and `forest-camp-evening`, each at version 1. New sessions default to `warm-craftsman-home`; changing the database default does not rewrite existing session rows. Scene changes use the same optimistic revision lock as crop and camera updates. Confirmation freezes `sceneId`, `sceneVersion` and `sceneChecksum` into the immutable design snapshot, while canonical plate-render and production-job inputs remain scene-independent.
+
 ## Provider seams
 
 - `ScenePlugin`: background, environment, lights, optional props and quality resources.

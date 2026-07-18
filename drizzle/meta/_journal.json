@@ -50,6 +50,13 @@
       "when": 1784360898470,
       "tag": "0006_past_lilandra",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1784388610462,
+      "tag": "0007_common_cerise",
+      "breakpoints": true
     }
   ]
 }
