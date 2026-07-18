@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: reflectcup
+          POSTGRES_USER: reflectcup
+          POSTGRES_PASSWORD: reflectcup
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U reflectcup -d reflectcup"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://reflectcup:reflectcup@127.0.0.1:5432/reflectcup
+      STORAGE_ROOT: ${{ github.workspace }}/storage
+      APP_ORIGIN: http://127.0.0.1:3000
+      SESSION_SECRET: ci-only-session-secret-with-more-than-32-bytes
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm db:migrate
+      - run: pnpm profile:generate
+      - run: pnpm calibration:generate
+      - run: git diff --exit-code
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm worker:build
+      - run: node dist/workers/production-worker.cjs --once
+      - run: pnpm build
+      - run: pnpm test:e2e
+      - run: pnpm audit --prod
+      - run: docker build --tag reflectcup-studio:ci .
