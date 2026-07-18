@@ -115,6 +115,30 @@ test("uploads, adjusts, autosaves and confirms a design", async ({ page }, testI
   await expect(page.getByText(/locked as a test snapshot/i)).toBeVisible();
 });
 
+test("switching scene autosaves it without changing the optical crop", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name.includes("mobile"), "desktop scene persistence check");
+  const state = await mockStudio(page);
+  await page.goto("/studio/new");
+  const sceneSelect = page.getByLabel("Scene");
+  await expect(sceneSelect).toHaveValue("studio-neutral");
+
+  await sceneSelect.selectOption("forest-camp-evening");
+  await expect(sceneSelect).toHaveValue("forest-camp-evening", { timeout: 10_000 });
+  await expect.poll(() => state.patches.some((patch) => (
+    typeof patch === "object" && patch !== null &&
+    "sceneId" in patch && patch.sceneId === "forest-camp-evening"
+  )), { timeout: 10_000 }).toBe(true);
+
+  const scenePatch = state.patches.find((patch) => (
+    typeof patch === "object" && patch !== null &&
+    "sceneId" in patch && patch.sceneId === "forest-camp-evening"
+  )) as { crop: PreviewSession["crop"]; sceneId: string };
+  expect(scenePatch.crop).toEqual({ centerX: 0.5, centerY: 0.5, scale: 1 });
+
+  await page.reload();
+  await expect(page.getByLabel("Scene")).toHaveValue("forest-camp-evening");
+});
+
 test("a failed canonical preview is visible, blocks confirmation, and can be retried", async ({ page }) => {
   const state = await mockStudio(page, { failCanonicalOnce: true });
   await page.goto("/studio/new");

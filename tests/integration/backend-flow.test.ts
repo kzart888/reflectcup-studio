@@ -195,6 +195,7 @@ describe("backend customer flow", () => {
             lut: { url: string };
             mask: { url: string };
             targetMask: { url: string };
+            targetContour: { url: string; mimeType: string; encoding: string };
           };
         };
         resumeUrl: string;
@@ -212,7 +213,12 @@ describe("backend customer flow", () => {
       profile: { slug: expect.stringMatching(/^backend-test-/) },
       lut: { url: `/api/v1/preview-sessions/${sessionId}/optical-profile/lut` },
       mask: { url: `/api/v1/preview-sessions/${sessionId}/optical-profile/mask` },
-      targetMask: { url: `/api/v1/preview-sessions/${sessionId}/optical-profile/target-mask` }
+      targetMask: { url: `/api/v1/preview-sessions/${sessionId}/optical-profile/target-mask` },
+      targetContour: {
+        url: `/api/v1/preview-sessions/${sessionId}/optical-profile/target-contour`,
+        mimeType: "application/json",
+        encoding: "target-contour-v1"
+      }
     });
     expect(createBody.data.session.opticalRuntime.checksum).toMatch(/^[0-9a-f]{64}$/);
     const cookieName = sessionCookieName(sessionId);
@@ -244,6 +250,32 @@ describe("backend customer flow", () => {
       height: 65,
       format: "png"
     });
+    const targetContourResponse = await getOpticalResourceRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}/optical-profile/target-contour`, {
+        headers: { cookie: `${cookieName}=${editorToken}` }
+      }),
+      { params: Promise.resolve({ id: sessionId, resource: "target-contour" }) }
+    );
+    expect(targetContourResponse.status).toBe(200);
+    expect(targetContourResponse.headers.get("content-type")).toBe("application/json");
+    expect(targetContourResponse.headers.get("etag")).toMatch(/^"sha256-[0-9a-f]{64}"$/);
+    const targetContour = (await targetContourResponse.json()) as {
+      schemaVersion: number;
+      coordinateSpace: string;
+      fillRule: string;
+      sourceSize: readonly [number, number];
+      checksum: string;
+      paths: { role: string; points: readonly (readonly [number, number])[] }[];
+    };
+    expect(targetContour).toMatchObject({
+      schemaVersion: 1,
+      coordinateSpace: "target-uv",
+      fillRule: "evenodd",
+      sourceSize: [65, 65],
+      checksum: expect.stringMatching(/^[0-9a-f]{16}$/)
+    });
+    expect(targetContour.paths.length).toBeGreaterThan(0);
+    expect(targetContour.paths.every((contourPath) => contourPath.points.length >= 3)).toBe(true);
 
     const getResponse = await getSessionRoute(
       new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, {
