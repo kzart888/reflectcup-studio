@@ -1,0 +1,2 @@
+CREATE INDEX "login_attempts_failed_email_created_idx" ON "login_attempts" USING btree ("normalized_email","created_at") WHERE "login_attempts"."succeeded" = false;--> statement-breakpoint
+CREATE INDEX "login_attempts_failed_ip_created_idx" ON "login_attempts" USING btree ("ip_hash","created_at") WHERE "login_attempts"."succeeded" = false;

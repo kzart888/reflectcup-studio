@@ -1,0 +1,1 @@
+CREATE INDEX "preview_sessions_expiry_idx" ON "preview_sessions" USING btree ("expires_at");

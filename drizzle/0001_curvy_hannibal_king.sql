@@ -1,0 +1,1 @@
+CREATE INDEX "audit_logs_action_ip_created_idx" ON "audit_logs" USING btree ("action","ip_hash","created_at");

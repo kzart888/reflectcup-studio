@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "optical_profiles_slug_published_unique" ON "optical_profiles" USING btree ("slug") WHERE "optical_profiles"."status" = 'published';
