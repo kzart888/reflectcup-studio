@@ -14,6 +14,8 @@ export default defineConfig([
     "python/**",
     "playwright-report/**",
     "test-results/**",
-    "coverage/**"
+    "coverage/**",
+    "data/**",
+    "storage/**"
   ])
 ]);
