@@ -1,0 +1,661 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "style-lab-v1",
+  "deterministicSeed": 20260718,
+  "dimensions": {
+    "width": 320,
+    "height": 240
+  },
+  "physical": {
+    "widthMm": 96,
+    "heightMm": 72,
+    "minFeatureMm": 0.4,
+    "minPitchMm": 0.6
+  },
+  "contactSheet": {
+    "path": "review-contact-sheet.png",
+    "sha256": "c010b3be2a8f1144cbf9470a5a9ca74311a5b4475821f19466a18ebcf865253f"
+  },
+  "outputs": [
+    {
+      "fixture": "checker",
+      "style": "input",
+      "path": "inputs/checker.png",
+      "sha256": "ea9cfa27c657c9bd9b2db61c775695fb2c3b480dd6e60c547ebd35afd4708298"
+    },
+    {
+      "fixture": "checker",
+      "style": "square-mosaic",
+      "path": "outputs/checker/square-mosaic.png",
+      "sha256": "d3e5a66780297d7e57ef892178d9d5bbab681af002f30e2607e496c507054e80",
+      "recipe": {
+        "id": "square-mosaic",
+        "version": 1,
+        "params": {
+          "cellSizeMm": 4.8
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "checker",
+      "style": "hex-mosaic",
+      "path": "outputs/checker/hex-mosaic.png",
+      "sha256": "9bbe90884be510a5c7336c3ecac2e5196d93fb6cb33daa40278f05e41b2663d0",
+      "recipe": {
+        "id": "hex-mosaic",
+        "version": 1,
+        "params": {
+          "cellDiameterMm": 5.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "checker",
+      "style": "clustered-dot",
+      "path": "outputs/checker/clustered-dot.png",
+      "sha256": "6c4ffa743b4fb1bb3aa587fbaa28f41e5ebe7b4dbbbead3bcc9ed054bf082eba",
+      "recipe": {
+        "id": "clustered-dot-halftone",
+        "version": 1,
+        "params": {
+          "gamma": 1,
+          "maxDotDiameterMm": 2.2,
+          "minDotDiameterMm": 0.4,
+          "pitchMm": 2.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "checker",
+      "style": "bayer-4",
+      "path": "outputs/checker/bayer-4.png",
+      "sha256": "da0dc359fc165c7013fd9a834289f52edf3178013599247dd49f95fe87531829",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 4,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "checker",
+      "style": "bayer-8",
+      "path": "outputs/checker/bayer-8.png",
+      "sha256": "0be7712f423f9968f41f007e0b4fe9c748471fb758eeb5771c308f00a222aa5a",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 8,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "checker",
+      "style": "floyd-steinberg",
+      "path": "outputs/checker/floyd-steinberg.png",
+      "sha256": "45b7f18f1d98e32e06693086087bd939f92e2db99af8eb76c350268d0ee3d352",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 1,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "checker",
+      "style": "stucki",
+      "path": "outputs/checker/stucki.png",
+      "sha256": "fc909063241fb61bfae3dd8e1b107a24fa511b54e493144367a7069ea9dea67f",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 2,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "portrait",
+      "style": "input",
+      "path": "inputs/portrait.png",
+      "sha256": "dd57c50fb0863d7b1f2c3cffc310e019866182776301c3302c814ef00e78e0b9"
+    },
+    {
+      "fixture": "portrait",
+      "style": "square-mosaic",
+      "path": "outputs/portrait/square-mosaic.png",
+      "sha256": "ff81bf502cbf0fea38aa2a27997b6070b3d9810da276256c558cfc780616e12d",
+      "recipe": {
+        "id": "square-mosaic",
+        "version": 1,
+        "params": {
+          "cellSizeMm": 4.8
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "portrait",
+      "style": "hex-mosaic",
+      "path": "outputs/portrait/hex-mosaic.png",
+      "sha256": "001f9c1858a691ce666dcbf8ee7e8f6b4748edd1716214d5b79dbb78a386f5e7",
+      "recipe": {
+        "id": "hex-mosaic",
+        "version": 1,
+        "params": {
+          "cellDiameterMm": 5.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "portrait",
+      "style": "clustered-dot",
+      "path": "outputs/portrait/clustered-dot.png",
+      "sha256": "e21cf8bac79119cd157934e7d9ad286582160209b492c49a6938425240b13539",
+      "recipe": {
+        "id": "clustered-dot-halftone",
+        "version": 1,
+        "params": {
+          "gamma": 1,
+          "maxDotDiameterMm": 2.2,
+          "minDotDiameterMm": 0.4,
+          "pitchMm": 2.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "portrait",
+      "style": "bayer-4",
+      "path": "outputs/portrait/bayer-4.png",
+      "sha256": "9ca8899bafb530bb03457d003abae82685ee0d8448309a17cc84a918cab3b25e",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 4,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "portrait",
+      "style": "bayer-8",
+      "path": "outputs/portrait/bayer-8.png",
+      "sha256": "044daf650d5e7e2bba8cf31e2b31c1cc1a2dfba058b525e9b0027030baf19218",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 8,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "portrait",
+      "style": "floyd-steinberg",
+      "path": "outputs/portrait/floyd-steinberg.png",
+      "sha256": "6e0c4e43121047fb8587e71cf52d555d15cbe01a4da2a1c146f8172292865dd2",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 1,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "portrait",
+      "style": "stucki",
+      "path": "outputs/portrait/stucki.png",
+      "sha256": "a8d92bd463ff8dad071b70f1b3af4c1f570cca2b15e962cac9246ed77a257ee4",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 2,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "text",
+      "style": "input",
+      "path": "inputs/text.png",
+      "sha256": "9a266a8dcc091bd4fc8a4185c97e9b76366e4da49dc433ad847d7149f47c2c91"
+    },
+    {
+      "fixture": "text",
+      "style": "square-mosaic",
+      "path": "outputs/text/square-mosaic.png",
+      "sha256": "85de48d59c53dd705a8f086a2fa8806cb04e7b9c60b8788e510729f48558d801",
+      "recipe": {
+        "id": "square-mosaic",
+        "version": 1,
+        "params": {
+          "cellSizeMm": 4.8
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "text",
+      "style": "hex-mosaic",
+      "path": "outputs/text/hex-mosaic.png",
+      "sha256": "b6d45f18cb6a034b21131c3994498baaf1baa3d06750085d1c8fc386a7b6663a",
+      "recipe": {
+        "id": "hex-mosaic",
+        "version": 1,
+        "params": {
+          "cellDiameterMm": 5.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "text",
+      "style": "clustered-dot",
+      "path": "outputs/text/clustered-dot.png",
+      "sha256": "63d83d5047e6b110c85be79cfb8a58153e24baf7f5f09ad59bcb93f82658fc9c",
+      "recipe": {
+        "id": "clustered-dot-halftone",
+        "version": 1,
+        "params": {
+          "gamma": 1,
+          "maxDotDiameterMm": 2.2,
+          "minDotDiameterMm": 0.4,
+          "pitchMm": 2.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "text",
+      "style": "bayer-4",
+      "path": "outputs/text/bayer-4.png",
+      "sha256": "24659043c56de44d8f20951e064974fc174f94ca5b4452af969e8e1f63ad30a8",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 4,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "text",
+      "style": "bayer-8",
+      "path": "outputs/text/bayer-8.png",
+      "sha256": "fec617d93e0eacafc24d41f5a0e827a4f87ba01d88ce967d0a8e6d0c50c3e3c1",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 8,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "text",
+      "style": "floyd-steinberg",
+      "path": "outputs/text/floyd-steinberg.png",
+      "sha256": "d4947c951d0d98fcb4f9430d76b88d3793bea5453ce976d7f0ebf781193e47e4",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 1,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "text",
+      "style": "stucki",
+      "path": "outputs/text/stucki.png",
+      "sha256": "f65772c922cce163daa3da06697de68d67b815a1bbc7702fee4e70e76fe487d0",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 2,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "landscape",
+      "style": "input",
+      "path": "inputs/landscape.png",
+      "sha256": "0dbb3007856fde10bf1526bddf9a29991d7c94c990ab30a328e4dc7967a7e27d"
+    },
+    {
+      "fixture": "landscape",
+      "style": "square-mosaic",
+      "path": "outputs/landscape/square-mosaic.png",
+      "sha256": "a09a38a8771d00f87d54622643738bbd8937021a58d6ec9ffd0f668db922532b",
+      "recipe": {
+        "id": "square-mosaic",
+        "version": 1,
+        "params": {
+          "cellSizeMm": 4.8
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "landscape",
+      "style": "hex-mosaic",
+      "path": "outputs/landscape/hex-mosaic.png",
+      "sha256": "e403f13ee09a1c114e858dfdda707d7980ae0ee31b9492ef48ca6764da99e133",
+      "recipe": {
+        "id": "hex-mosaic",
+        "version": 1,
+        "params": {
+          "cellDiameterMm": 5.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "landscape",
+      "style": "clustered-dot",
+      "path": "outputs/landscape/clustered-dot.png",
+      "sha256": "e076c4bb574e6c015ce85c3e59010aa07c0147f69347a1757b5a6925c098612f",
+      "recipe": {
+        "id": "clustered-dot-halftone",
+        "version": 1,
+        "params": {
+          "gamma": 1,
+          "maxDotDiameterMm": 2.2,
+          "minDotDiameterMm": 0.4,
+          "pitchMm": 2.4
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "landscape",
+      "style": "bayer-4",
+      "path": "outputs/landscape/bayer-4.png",
+      "sha256": "de4705889bf8c175f38b53ef56765fbf7c05c25d8e49e22637637c23cf703792",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 4,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "landscape",
+      "style": "bayer-8",
+      "path": "outputs/landscape/bayer-8.png",
+      "sha256": "1b0cdcc64ad4491c09d9e35c10638019258b9a21290d1efe38084497d1602660",
+      "recipe": {
+        "id": "bayer-dither",
+        "version": 1,
+        "params": {
+          "matrixSize": 8,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "landscape",
+      "style": "floyd-steinberg",
+      "path": "outputs/landscape/floyd-steinberg.png",
+      "sha256": "9f5f83999c2444800e5465a4f3f96ffe429f77d3690eec8a79781a5d4ba84e8a",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 1,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    },
+    {
+      "fixture": "landscape",
+      "style": "stucki",
+      "path": "outputs/landscape/stucki.png",
+      "sha256": "c9446dc376ef9af3f5bd4562627f2418a14f2262306167af636c233e9208ad3b",
+      "recipe": {
+        "id": "error-diffusion",
+        "version": 1,
+        "params": {
+          "kernel": 2,
+          "samplePitchMm": 1.2
+        },
+        "seed": 20260718,
+        "domain": "target",
+        "physical": {
+          "widthMm": 96,
+          "heightMm": 72,
+          "minFeatureMm": 0.4,
+          "minPitchMm": 0.6
+        }
+      }
+    }
+  ]
+}
