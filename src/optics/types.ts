@@ -72,6 +72,8 @@ export type TargetPlateMap = {
   width: number;
   height: number;
   samples: readonly (TargetPlateSample | null)[];
+  /** Source profile used to build this map. Hand-authored test maps may omit it. */
+  profile?: OpticalProfile;
 };
 
 export type PlateTargetLut = {
@@ -87,6 +89,29 @@ export type GeneratedOpticalProfile = {
   profile: OpticalProfile;
   targetToPlate: TargetPlateMap;
   plateToTarget: PlateTargetLut;
+  targetRegion: {
+    /** Every target sample whose camera ray reaches the plate, including debug-only sheets. */
+    rayHitMask: Uint8Array;
+    /** The largest connected, dominant-orientation, locally invertible target sheet. */
+    coreMask: Uint8Array;
+    contour: TargetContourDocument;
+  };
+};
+
+export type TargetContourPath = {
+  role: "outer" | "hole";
+  /** Normalized target UV coordinates. The closing segment is implicit. */
+  points: readonly Vec2[];
+};
+
+export type TargetContourDocument = {
+  schemaVersion: 1;
+  coordinateSpace: "target-uv";
+  fillRule: "evenodd";
+  sourceSize: readonly [number, number];
+  paths: readonly TargetContourPath[];
+  /** FNV-1a checksum of every preceding field in canonical insertion order. */
+  checksum: string;
 };
 
 export type RawRgbaImage = {

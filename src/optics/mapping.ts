@@ -1,4 +1,5 @@
 import { fnv1a64 } from "./checksum";
+import { buildTargetContourDocument } from "./contour";
 import { distance2, signedArea2 } from "./math";
 import { traceTargetToPlate } from "./geometry";
 import type {
@@ -24,7 +25,7 @@ export function generateTargetPlateMap(profile: OpticalProfile): TargetPlateMap 
       samples[y * width + x] = traceTargetToPlate(profile, targetUv);
     }
   }
-  return { width, height, samples };
+  return { width, height, samples, profile };
 }
 
 function collectTriangles(profile: OpticalProfile, map: TargetPlateMap): Triangle[] {
@@ -59,6 +60,17 @@ function collectTriangles(profile: OpticalProfile, map: TargetPlateMap): Triangl
     }
   }
   return triangles;
+}
+
+function dominantTriangles(profile: OpticalProfile, map: TargetPlateMap): Triangle[] {
+  const triangles = collectTriangles(profile, map);
+  const orientationVote = triangles.reduce((vote, [a, b, c]) => (
+    vote + Math.sign(signedArea2(a.plateUv, b.plateUv, c.plateUv))
+  ), 0);
+  const orientation = orientationVote < 0 ? -1 : 1;
+  return triangles.filter(([a, b, c]) => (
+    Math.sign(signedArea2(a.plateUv, b.plateUv, c.plateUv)) === orientation
+  ));
 }
 
 function rasterizeTriangle(triangle: Triangle, lut: PlateTargetLut, orientation: number): void {
@@ -101,17 +113,14 @@ export function invertTargetPlateMap(
     targetUv: new Float32Array(width * height * 2),
     validMask: new Uint8Array(width * height)
   };
-  const triangles = collectTriangles(profile, map);
-  let orientationVote = 0;
-  for (const [a, b, c] of triangles) {
-    orientationVote += Math.sign(signedArea2(a.plateUv, b.plateUv, c.plateUv));
-  }
-  const orientation = orientationVote < 0 ? -1 : 1;
-  for (const triangle of triangles) rasterizeTriangle(triangle, lut, orientation);
+  const triangles = dominantTriangles(profile, map);
+  for (const triangle of triangles) rasterizeTriangle(triangle, lut, Math.sign(
+    signedArea2(triangle[0].plateUv, triangle[1].plateUv, triangle[2].plateUv)
+  ));
   return lut;
 }
 
-export function buildTargetValidMask(map: TargetPlateMap): Uint8Array {
+export function buildTargetRayHitMask(map: TargetPlateMap): Uint8Array {
   const mask = new Uint8Array(map.width * map.height);
   map.samples.forEach((sample, index) => {
     mask[index] = sample ? 255 : 0;
@@ -119,9 +128,67 @@ export function buildTargetValidMask(map: TargetPlateMap): Uint8Array {
   return mask;
 }
 
+function keepLargestConnectedComponent(mask: Uint8Array, width: number, height: number): Uint8Array {
+  const visited = new Uint8Array(mask.length);
+  let largest: number[] = [];
+  const queue = new Int32Array(mask.length);
+  for (let start = 0; start < mask.length; start += 1) {
+    if (mask[start] === 0 || visited[start] !== 0) continue;
+    let read = 0;
+    let write = 0;
+    queue[write++] = start;
+    visited[start] = 1;
+    const component: number[] = [];
+    while (read < write) {
+      const pixel = queue[read++];
+      component.push(pixel);
+      const x = pixel % width;
+      const y = Math.floor(pixel / width);
+      for (let dy = -1; dy <= 1; dy += 1) {
+        for (let dx = -1; dx <= 1; dx += 1) {
+          if (dx === 0 && dy === 0) continue;
+          const nextX = x + dx;
+          const nextY = y + dy;
+          if (nextX < 0 || nextY < 0 || nextX >= width || nextY >= height) continue;
+          const next = nextY * width + nextX;
+          if (mask[next] === 0 || visited[next] !== 0) continue;
+          visited[next] = 1;
+          queue[write++] = next;
+        }
+      }
+    }
+    if (component.length > largest.length) largest = component;
+  }
+  const result = new Uint8Array(mask.length);
+  for (const pixel of largest) result[pixel] = 255;
+  return result;
+}
+
+export function buildTargetCoreMask(profile: OpticalProfile, map: TargetPlateMap): Uint8Array {
+  const accepted = new Uint8Array(map.width * map.height);
+  for (const triangle of dominantTriangles(profile, map)) {
+    for (const sample of triangle) {
+      const x = Math.round(sample.targetUv[0] * (map.width - 1));
+      const y = Math.round(sample.targetUv[1] * (map.height - 1));
+      accepted[y * map.width + x] = 255;
+    }
+  }
+  return keepLargestConnectedComponent(accepted, map.width, map.height);
+}
+
+/**
+ * Customer-facing compatibility name. Generated maps carry their source profile and therefore
+ * return the validated core region. Hand-authored maps fall back to the raw ray-hit mask.
+ */
+export function buildTargetValidMask(map: TargetPlateMap): Uint8Array {
+  return map.profile ? buildTargetCoreMask(map.profile, map) : buildTargetRayHitMask(map);
+}
+
 export function generateOpticalProfile(profile: OpticalProfile): GeneratedOpticalProfile {
   const targetToPlate = generateTargetPlateMap(profile);
   const plateToTarget = invertTargetPlateMap(profile, targetToPlate);
+  const rayHitMask = buildTargetRayHitMask(targetToPlate);
+  const coreMask = buildTargetCoreMask(profile, targetToPlate);
   const lutChecksum = fnv1a64(plateToTarget.targetUv) + fnv1a64(plateToTarget.validMask);
   return {
     profile: {
@@ -129,6 +196,11 @@ export function generateOpticalProfile(profile: OpticalProfile): GeneratedOptica
       checksums: { ...profile.checksums, lut: lutChecksum }
     },
     targetToPlate,
-    plateToTarget
+    plateToTarget,
+    targetRegion: {
+      rayHitMask,
+      coreMask,
+      contour: buildTargetContourDocument(coreMask, targetToPlate.width, targetToPlate.height)
+    }
   };
 }

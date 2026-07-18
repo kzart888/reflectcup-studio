@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "profileId": "curved-cup-80-dish-182-v2",
+  "profileVersion": 2,
+  "files": {
+    "profile.json": {
+      "bytes": 12766,
+      "sha256": "cb66341e56ff11508de0ba9e0dc8fbcadde3d104acbabfcb373072ad3650c47c",
+      "format": "application/json"
+    },
+    "plate-to-target.rg32f": {
+      "bytes": 2097152,
+      "sha256": "b16f9fada649ea4cf8d1183c2d1e3eca46521e336c60e55fabe391c7212bc461",
+      "format": "RG32F little-endian"
+    },
+    "plate-valid-mask.bin": {
+      "bytes": 262144,
+      "sha256": "6651688336ff4b34d88482e4cc95bcb77a9ef9406955b1875ad20d1b36a7f65b",
+      "format": "R8"
+    },
+    "plate-valid-mask.png": {
+      "bytes": 4483,
+      "sha256": "835fa0df26ab8ba692bda3e7518c5e7c4092afb749026cae28fde31c2748b357",
+      "format": "image/png"
+    },
+    "target-valid-mask.png": {
+      "bytes": 2819,
+      "sha256": "8167afad5767ca0569f5cdbe11d69dd28b670e8bad30b0e7babd91a53bb84d90",
+      "format": "image/png"
+    },
+    "target-ray-hit-mask.png": {
+      "bytes": 3041,
+      "sha256": "151b84cfc6508cb0327922733d72838b4c47c44f1fc148c76c6d719da2e381a8",
+      "format": "image/png"
+    },
+    "target-core-mask.png": {
+      "bytes": 2819,
+      "sha256": "8167afad5767ca0569f5cdbe11d69dd28b670e8bad30b0e7babd91a53bb84d90",
+      "format": "image/png"
+    },
+    "target-core-contour.json": {
+      "bytes": 23844,
+      "sha256": "2fd0b1b754fd82e4c7f98622b6e46925cb3c982dff6b569ed082cfd043a6480d",
+      "format": "application/json; normalized target-uv; evenodd"
+    }
+  }
+}

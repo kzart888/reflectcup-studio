@@ -1,5 +1,6 @@
 export * from "./checksum";
 export * from "./camera";
+export * from "./contour";
 export * from "./crop";
 export * from "./geometry";
 export * from "./glsl";
