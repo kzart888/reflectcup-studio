@@ -3,6 +3,10 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: false,
+  // The preview suites create real WebGL contexts. Capping concurrency avoids
+  // starving autosave and resource-ready checks when Chromium shares one GPU
+  // process across both desktop and mobile projects.
+  workers: process.env.CI ? 2 : 4,
   retries: process.env.CI ? 2 : 0,
   reporter: [["html", { open: "never" }], ["list"]],
   use: {

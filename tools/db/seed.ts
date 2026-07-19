@@ -1,10 +1,11 @@
 import { existsSync } from "node:fs";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
+import sharp from "sharp";
 
 import { closeDatabase, getDatabase } from "../../src/db/client";
 import { appSettings, assets, opticalProfiles } from "../../src/db/schema";
 import { sha256, stableJson } from "../../src/domains/auth/security";
-import { createNominalOpticalProfile, generateOpticalProfile } from "../../src/optics";
+import { createCurvedCupOpticalProfile, createCurvedCupOpticalProfileV3, createNominalOpticalProfile, generateOpticalProfile, type GeneratedOpticalProfile } from "../../src/optics";
 import { getStorage } from "../../src/storage/filesystem-storage";
 
 function loadLocalEnvironment(): void {
@@ -13,13 +14,20 @@ function loadLocalEnvironment(): void {
   }
 }
 
-async function installAsset(kind: string, extension: string, mimeType: string, bytes: Uint8Array) {
+async function installAsset(
+  profileKey: string,
+  kind: string,
+  extension: string,
+  mimeType: string,
+  bytes: Uint8Array,
+  metadata: Record<string, unknown> = {}
+) {
   const digest = sha256(bytes);
   const existing = await getDatabase().query.assets.findFirst({
     where: and(eq(assets.kind, kind), eq(assets.sha256, digest))
   });
   if (existing) return existing;
-  const key = `optical-profiles/nominal-v1/${digest}.${extension}`;
+  const key = `optical-profiles/${profileKey}/${digest}.${extension}`;
   await getStorage().put(key, bytes);
   const [asset] = await getDatabase()
     .insert(assets)
@@ -29,34 +37,58 @@ async function installAsset(kind: string, extension: string, mimeType: string, b
       mimeType,
       byteSize: bytes.byteLength,
       sha256: digest,
-      metadata: { endian: kind === "optical-lut" ? "little" : undefined }
+      metadata: { ...metadata, endian: kind === "optical-lut" ? "little" : undefined }
     })
     .returning();
   return asset;
 }
 
-async function main(): Promise<void> {
-  loadLocalEnvironment();
-  const generated = generateOpticalProfile(
-    createNominalOpticalProfile({ status: "published", targetSamples: [129, 129], lutSize: [512, 512] })
-  );
+async function installProfile(
+  generated: GeneratedOpticalProfile,
+  databaseStatus: "published" | "retired" = "published",
+): Promise<void> {
+  const profileKey = `${generated.profile.slug}-v${generated.profile.version}`;
+  const checksum = sha256(stableJson(generated.profile));
   const targetBytes = new Uint8Array(
     generated.plateToTarget.targetUv.buffer,
     generated.plateToTarget.targetUv.byteOffset,
     generated.plateToTarget.targetUv.byteLength
   );
-  const lutAsset = await installAsset("optical-lut", "rg32f", "application/octet-stream", targetBytes);
-  const maskAsset = await installAsset("optical-mask", "r8", "application/octet-stream", generated.plateToTarget.validMask);
-  const checksum = sha256(stableJson(generated.profile));
+  const lutAsset = await installAsset(profileKey, "optical-lut", "rg32f", "application/octet-stream", targetBytes);
+  const maskAsset = await installAsset(profileKey, "optical-mask", "r8", "application/octet-stream", generated.plateToTarget.validMask);
+  const [targetWidth, targetHeight] = generated.profile.mapping.targetSamples;
+  const targetMaskBytes = await sharp(generated.targetRegion.coreMask, {
+    raw: { width: targetWidth, height: targetHeight, channels: 1 }
+  }).png({ compressionLevel: 9 }).toBuffer();
+  const targetContourBytes = Buffer.from(JSON.stringify(generated.targetRegion.contour));
+  const targetMetadata = {
+    profileSlug: generated.profile.slug,
+    profileVersion: generated.profile.version,
+    profileChecksum: checksum
+  };
+  await Promise.all([
+    installAsset(profileKey, "optical-target-mask", "png", "image/png", targetMaskBytes, targetMetadata),
+    installAsset(profileKey, "optical-target-contour", "json", "application/json", targetContourBytes, targetMetadata)
+  ]);
   const existing = await getDatabase().query.opticalProfiles.findFirst({
     where: and(eq(opticalProfiles.slug, generated.profile.slug), eq(opticalProfiles.version, generated.profile.version))
   });
+  if (databaseStatus === "published") {
+    await getDatabase()
+      .update(opticalProfiles)
+      .set({ status: "retired", updatedAt: new Date() })
+      .where(and(
+        eq(opticalProfiles.slug, generated.profile.slug),
+        eq(opticalProfiles.status, "published"),
+        ne(opticalProfiles.version, generated.profile.version),
+      ));
+  }
   if (!existing) {
     await getDatabase().insert(opticalProfiles).values({
       slug: generated.profile.slug,
       label: generated.profile.label,
       version: generated.profile.version,
-      status: "published",
+      status: databaseStatus,
       profile: generated.profile as unknown as Record<string, unknown>,
       checksum,
       lutAssetId: lutAsset.id,
@@ -68,7 +100,7 @@ async function main(): Promise<void> {
       .update(opticalProfiles)
       .set({
         label: generated.profile.label,
-        status: "published",
+        status: databaseStatus,
         profile: generated.profile as unknown as Record<string, unknown>,
         checksum,
         lutAssetId: lutAsset.id,
@@ -77,7 +109,30 @@ async function main(): Promise<void> {
         updatedAt: new Date()
       })
       .where(eq(opticalProfiles.id, existing.id));
+  } else if (existing.status !== databaseStatus) {
+    await getDatabase()
+      .update(opticalProfiles)
+      .set({
+        status: databaseStatus,
+        publishedAt: databaseStatus === "published" ? new Date() : existing.publishedAt,
+        updatedAt: new Date(),
+      })
+      .where(eq(opticalProfiles.id, existing.id));
   }
+  process.stdout.write(`Installed ${databaseStatus} profile ${generated.profile.slug}@${generated.profile.version}.\n`);
+}
+
+async function main(): Promise<void> {
+  loadLocalEnvironment();
+  await installProfile(generateOpticalProfile(
+    createNominalOpticalProfile({ status: "published", targetSamples: [129, 129], lutSize: [512, 512] })
+  ));
+  await installProfile(generateOpticalProfile(
+    createCurvedCupOpticalProfile({ status: "published", targetSamples: [513, 513], lutSize: [512, 512] })
+  ), "retired");
+  await installProfile(generateOpticalProfile(
+    createCurvedCupOpticalProfileV3({ status: "published", targetSamples: [513, 513], lutSize: [512, 512] })
+  ));
 
   const defaults: Record<string, unknown> = {
     "preview.toneMappingExposure": 1.08,
@@ -91,7 +146,6 @@ async function main(): Promise<void> {
       .values({ key, value })
       .onConflictDoNothing({ target: appSettings.key });
   }
-  process.stdout.write(`Installed published profile ${generated.profile.slug}@${generated.profile.version}.\n`);
 }
 
 main()

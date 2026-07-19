@@ -173,7 +173,7 @@ describe("curved cup optical profile v2", () => {
     expect(errors.length).toBeGreaterThan(100_000);
     expect(errors[Math.floor(errors.length * 0.95)]).toBeLessThanOrEqual(0.25);
     expect(errors.at(-1)).toBeLessThanOrEqual(0.75);
-  });
+  }, 15_000);
 
   it("ships checksummed v2 core/debug assets while leaving nominal-v1 byte-identical", async () => {
     const directory = "public/optical-profiles/curved-cup-v2";

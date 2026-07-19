@@ -8,7 +8,7 @@ ReflectCup Studio is an open-source web customizer for mirror-anamorphic cups. A
 
 - Image upload, orientation/metadata normalization, pan and zoom crop
 - Shared optical LUT for interactive preview and authoritative server rendering
-- Curved-cup v2 geometry derived from audited measurements, with a crisp vector reflection-area contour that excludes the disconnected top island
+- Curved-cup v3 mapping over geometry derived from audited measurements, with a reversible core and a crisp vector contour that excludes the disconnected top island
 - WebGL2 cup reflection with a fixed optical centre, PMREM environment response and honest off-axis distortion
 - Switchable warm Craftsman home, forest camp and neutral optical-studio previews; the choice autosaves and is frozen into confirmation
 - Lightweight procedural near/mid scenery, CC0 HDR/PBR assets and offline-generated soft table shadow/contact AO, without runtime shadow maps
@@ -20,7 +20,7 @@ ReflectCup Studio is an open-source web customizer for mirror-anamorphic cups. A
 
 AI hidden-image generation, customer-facing style controls, payments and production fulfilment are deliberately disabled in this version. Scene choice affects only the 3D proof and confirmation provenance; it never changes the LUT or production PNG.
 
-On a fresh database, `pnpm db:seed` publishes immutable `nominal-v1` and then `curved-cup-v2`, making v2 the most recently published profile selected for new sessions. Existing sessions retain their original profile, version and checksum. New sessions default to the selected **warm Craftsman home option 1**; **forest camp option 2** and the neutral optical studio remain selectable.
+On a fresh database, `pnpm db:seed` publishes immutable `nominal-v1`, historical `curved-cup-v2`, and current `curved-cup-v3` in order, making v3 the newest profile selected for new sessions. v3 uses the exact v2 physical geometry with a corrected, separately checksummed reversible-core LUT compiler; no v1/v2 bytes are rewritten. Existing sessions retain their original profile, version and checksum. New sessions default to the selected **warm Craftsman home option 1**; **forest camp option 2** and the neutral optical studio remain selectable.
 
 ## Local setup
 
@@ -30,7 +30,7 @@ Requirements: Node.js 24+, pnpm 10+, a WebGL2 browser, and PostgreSQL 16 (Docker
 2. Run `pnpm local:up`.
 3. Run `pnpm db:migrate` and `pnpm db:seed`.
 4. Run `pnpm admin:create -- --email owner@example.com` and store the one-time password securely.
-5. Optionally reproduce public fixtures with `pnpm profile:generate -- --profile nominal-v1`, `pnpm profile:generate -- --profile curved-cup-v2`, `pnpm calibration:generate` and `pnpm scene:bake`.
+5. Optionally reproduce public fixtures with `pnpm profile:generate -- --profile nominal-v1`, `pnpm profile:generate -- --profile curved-cup-v2`, `pnpm profile:generate -- --profile curved-cup-v3`, `pnpm calibration:generate` and `pnpm scene:bake`.
 6. Run `pnpm dev` and, in a second terminal, `pnpm worker:production`. Open the customer studio at `http://127.0.0.1:3000/studio/new` or the administrator login at `http://127.0.0.1:3000/admin/login`.
 
 If Docker Desktop is unavailable on Windows, `pnpm local:postgres` starts the bundled/local PostgreSQL 16 workspace cluster on port 54329; then run the same migration and seed commands.
@@ -45,7 +45,7 @@ Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm worker:build`, `pnpm build
 
 The shipped scene runtime uses Three.js-authored geometry, JPEG PBR maps, equirectangular HDR environments, PMREM and deterministic PNG shadow/AO layers. The selected concept frames under `docs/assets/scenes/concepts/` are visual references only and are never used as fake panoramic backgrounds.
 
-Blender and `toktx`/glTF compression tooling were unavailable in the implementation environment. Consequently the planned Blender/Cycles lightmaps, UV2 GLB/Meshopt packages, KTX2 textures and same-scene 360° panorama/HDR pairs are a staged pipeline, not a shipped capability. The catalog includes 2K high-tier HDR files, but the current runtime intentionally starts from 1K environments and does not yet perform an idle 2K upgrade. See `docs/scene-assets.md` and `docs/realtime-preview.md`.
+Blender and `toktx`/glTF compression tooling were unavailable in the implementation environment. Consequently the planned Blender/Cycles lightmaps, UV2 GLB/Meshopt packages, KTX2 textures and same-scene 360° panorama/HDR pairs are a staged pipeline, not a shipped capability. Mobile/save-data devices start from the Low 1K tier, regular desktops start at Medium 1K and eligible desktops promote to the 2K High tier while idle. See `docs/scene-assets.md` and `docs/realtime-preview.md`.
 
 ## Private calibration boundary
 

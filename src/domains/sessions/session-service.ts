@@ -28,7 +28,7 @@ import {
   issueInitialAccessTokens,
   refreshSessionAccessExpiry
 } from "@/domains/sessions/access-service";
-import { findAsset, insertAsset, type AssetRecord } from "@/repositories/assets";
+import { assetStorageKeys, findAsset, insertAsset, type AssetRecord } from "@/repositories/assets";
 import { findProfile, findPublishedProfile } from "@/repositories/profiles";
 import { findPreviewSession } from "@/repositories/preview-sessions";
 import { getStorage } from "@/storage/filesystem-storage";
@@ -57,10 +57,11 @@ const uploadWorkGate = new WorkGate(2, 4, "UPLOAD_CAPACITY_EXCEEDED");
 
 function assetRef(asset: AssetRecord | undefined, sessionId: string): AssetRef | undefined {
   if (!asset) return undefined;
+  const variant = asset.kind === "source" ? "?variant=preview" : "";
   return {
     id: asset.id,
     kind: asset.kind,
-    url: `/api/v1/preview-sessions/${sessionId}/assets/${asset.id}`,
+    url: `/api/v1/preview-sessions/${sessionId}/assets/${asset.id}${variant}`,
     mimeType: asset.mimeType,
     width: asset.width ?? undefined,
     height: asset.height ?? undefined,
@@ -119,6 +120,11 @@ export async function serializeSession(row: typeof previewSessions.$inferSelect)
         width: targetWidth,
         height: targetHeight,
         encoding: "png-r8"
+      },
+      targetContour: {
+        url: `${opticalBaseUrl}/target-contour`,
+        mimeType: "application/json",
+        encoding: "target-contour-v1"
       }
     },
     previewSettings,
@@ -307,7 +313,9 @@ async function uploadSourceInternal(id: string, file: File) {
   }
 
   let normalized: Buffer;
+  let browserPreview: Buffer;
   let normalizedMetadata: Metadata;
+  let browserPreviewMetadata: Metadata;
   try {
     normalized = await sharp(input, { failOn: "error", limitInputPixels: MAX_INPUT_PIXELS })
       .rotate()
@@ -315,14 +323,33 @@ async function uploadSourceInternal(id: string, file: File) {
       .webp({ quality: 92, effort: 4, smartSubsample: true })
       .toBuffer();
     normalizedMetadata = await sharp(normalized).metadata();
+    browserPreview = await sharp(normalized)
+      .resize({ width: 2048, height: 2048, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 88, effort: 4, smartSubsample: true })
+      .toBuffer();
+    browserPreviewMetadata = await sharp(browserPreview).metadata();
+    if (!browserPreviewMetadata.width || !browserPreviewMetadata.height) {
+      throw new Error("Browser preview dimensions are missing");
+    }
   } catch {
     throw new ApiError(422, "IMAGE_NORMALIZATION_FAILED", "The image could not be normalized");
   }
 
   const digest = sha256(normalized);
+  const previewDigest = sha256(browserPreview);
   const key = `sessions/${id}/source/${randomUUID()}.webp`;
+  const previewKey = `sessions/${id}/source-preview/${randomUUID()}.webp`;
   const storage = getStorage();
-  await storage.put(key, normalized);
+  try {
+    await storage.put(key, normalized);
+    await storage.put(previewKey, browserPreview);
+  } catch (error) {
+    await Promise.all([
+      storage.delete(key).catch(() => undefined),
+      storage.delete(previewKey).catch(() => undefined)
+    ]);
+    throw error;
+  }
   let asset: AssetRecord;
   try {
     asset = await insertAsset({
@@ -334,14 +361,28 @@ async function uploadSourceInternal(id: string, file: File) {
       width: normalizedMetadata.width,
       height: normalizedMetadata.height,
       sha256: digest,
-      metadata: { originalMimeType: file.type, originalName: file.name.slice(0, 200) }
+      metadata: {
+        originalMimeType: file.type,
+        originalName: file.name.slice(0, 200),
+        previewStorageKey: previewKey,
+        previewByteSize: browserPreview.byteLength,
+        previewSha256: previewDigest,
+        previewWidth: browserPreviewMetadata.width,
+        previewHeight: browserPreviewMetadata.height
+      }
     });
   } catch (error) {
-    await enqueueStorageDeletions([{ storageKey: key, reason: "source_asset_insert_failed" }])
+    await enqueueStorageDeletions([
+      { storageKey: key, reason: "source_asset_insert_failed" },
+      { storageKey: previewKey, reason: "source_preview_asset_insert_failed" }
+    ])
       .then(() => processStorageDeletionOutbox({ limit: 20 }))
       .catch(async (cleanupError: unknown) => {
         console.error("Source object cleanup could not be queued", cleanupError);
-        await storage.delete(key).catch(() => undefined);
+        await Promise.all([
+          storage.delete(key).catch(() => undefined),
+          storage.delete(previewKey).catch(() => undefined)
+        ]);
       });
     throw error;
   }
@@ -387,10 +428,9 @@ async function uploadSourceInternal(id: string, file: File) {
       if (staleAssets.length > 0) {
         await transaction
           .insert(storageDeletionOutbox)
-          .values(storageDeletionValues(staleAssets.map((entry) => ({
-            storageKey: entry.storageKey,
-            reason: "source_replaced"
-          }))))
+          .values(storageDeletionValues(staleAssets.flatMap((entry) => (
+            assetStorageKeys(entry).map((storageKey) => ({ storageKey, reason: "source_replaced" }))
+          ))))
           .onConflictDoUpdate(storageDeletionConflictClause());
         await transaction.delete(assets).where(inArray(assets.id, staleAssets.map((entry) => entry.id)));
       }
@@ -400,7 +440,10 @@ async function uploadSourceInternal(id: string, file: File) {
     await getDatabase().transaction(async (transaction) => {
       await transaction
         .insert(storageDeletionOutbox)
-        .values(storageDeletionValues([{ storageKey: key, reason: "source_update_rolled_back" }]))
+        .values(storageDeletionValues([
+          { storageKey: key, reason: "source_update_rolled_back" },
+          { storageKey: previewKey, reason: "source_preview_update_rolled_back" }
+        ]))
         .onConflictDoUpdate(storageDeletionConflictClause());
       await transaction.delete(assets).where(eq(assets.id, asset.id));
     }).then(() => processStorageDeletionOutbox({ limit: 20 })).catch((cleanupError: unknown) => {

@@ -20,7 +20,7 @@ ReflectCup Studio turns a customer image into a printable plate pattern and prev
 
 - Runtime world coordinates are right-handed, Y-up and measured in metres. Manufacturing dimensions are millimetres and must cross an explicit conversion boundary.
 - A published `OpticalProfile` is immutable. Existing sessions and snapshots retain its version and checksum.
-- A fresh seed makes `curved-cup-v2` the newest published profile; `nominal-v1` remains immutable for old sessions and regression.
+- A fresh seed makes `curved-cup-v3` the newest published profile. `nominal-v1` and `curved-cup-v2` remain byte-immutable for old sessions and regression; v3 reuses v2 geometry but has a separately checksummed reversible-core mapping generator.
 - Plate display, cup reflection and backend export must use the same `printUV`, LUT, crop transform and colour convention.
 - Scene selection changes preview/provenance only, never the optical LUT, crop or production PNG.
 - The browser may render interactively, but saved previews and production files are generated authoritatively on the server.

@@ -3,6 +3,7 @@ import type { OpticalProfile, RadialProfilePoint } from "./types";
 
 export const OPTICAL_GENERATOR_VERSION = "nominal-raytrace-v1";
 export const CURVED_OPTICAL_GENERATOR_VERSION = "curved-raytrace-core-region-v2";
+export const CURVED_REVERSIBLE_OPTICAL_GENERATOR_VERSION = "curved-raytrace-reversible-core-v3";
 
 export const CURVED_CUP_RINGS_MM = [
   { y: 7.088845, radius: 31.952057 },
@@ -209,6 +210,50 @@ export function createCurvedCupOpticalProfile(overrides: {
     checksums: {
       geometry: fnv1a64(JSON.stringify(geometry)),
       generator: fnv1a64(CURVED_OPTICAL_GENERATOR_VERSION)
+    }
+  };
+}
+
+/**
+ * Same audited physical geometry as v2, with a new inverse-map/core contract.
+ * v2 remains immutable because existing sessions and snapshots pin its bytes.
+ */
+export function createCurvedCupOpticalProfileV3(overrides: {
+  targetSamples?: readonly [number, number];
+  lutSize?: readonly [number, number];
+  status?: OpticalProfile["status"];
+} = {}): OpticalProfile {
+  const geometry = {
+    ...nominalGeometry,
+    cup: {
+      axisOrigin: nominalGeometry.cup.axisOrigin,
+      radialProfile: resampleRadialProfile()
+    }
+  };
+  return {
+    schemaVersion: 1,
+    id: "curved-cup-80-dish-182-v3",
+    slug: "curved-cup-80-dish-182",
+    label: "Curved 80 mm cup / 182 mm dish",
+    version: 3,
+    status: overrides.status ?? "draft",
+    units: "metres",
+    coordinateSystem: {
+      handedness: "right",
+      upAxis: "+Y",
+      platePlane: "XZ",
+      printUv: "+X,-Z"
+    },
+    ...geometry,
+    mapping: {
+      targetSamples: overrides.targetSamples ?? [513, 513],
+      lutSize: overrides.lutSize ?? [512, 512],
+      maxPlateEdge: 0.008,
+      generatorVersion: CURVED_REVERSIBLE_OPTICAL_GENERATOR_VERSION
+    },
+    checksums: {
+      geometry: fnv1a64(JSON.stringify(geometry)),
+      generator: fnv1a64(CURVED_REVERSIBLE_OPTICAL_GENERATOR_VERSION)
     }
   };
 }

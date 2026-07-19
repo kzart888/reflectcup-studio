@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { statSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import {
@@ -11,6 +12,17 @@ import {
 } from "@/domains/scenes/catalog";
 import { sessionPatchSchema } from "@/domains/sessions/validation";
 import { CUSTOMER_SCENES, getSceneDescriptor } from "@/scenes/catalog";
+import {
+  LEGACY_SCENE_V1_IDENTITIES,
+  SCENE_RELEASES,
+  serializeSceneReleaseForChecksum,
+} from "@/scenes/release-manifest";
+
+const EXPECTED_RELEASES = {
+  "studio-neutral": "b2284d246bab7eecab47690467374eca132330bf95f7aee7d5c01ec927df5616",
+  "warm-craftsman-home": "db0c979d798ab55cd6c5b663812efb395ca15789dea5fcc5b6c68f6945fc7f16",
+  "forest-camp-evening": "04e18b82607a8b2d44c68b2b44d305964ac2754a53bf17447157ac321b235183",
+} as const;
 
 describe("published scene catalog", () => {
   it("publishes the three versioned scene IDs with stable checksums", () => {
@@ -22,11 +34,63 @@ describe("published scene catalog", () => {
     expect(DEFAULT_SCENE_ID).toBe("warm-craftsman-home");
     expect(PUBLISHED_SCENES).toHaveLength(3);
     for (const scene of PUBLISHED_SCENES) {
-      expect(scene).toMatchObject({ version: 1, status: "published" });
+      expect(scene).toMatchObject({ version: 2, status: "published" });
       expect(scene.checksum).toMatch(/^[0-9a-f]{64}$/);
       expect(findPublishedScene(scene.id)).toEqual(scene);
     }
     expect(new Set(PUBLISHED_SCENES.map((scene) => scene.checksum)).size).toBe(3);
+    expect(LEGACY_SCENE_V1_IDENTITIES).toEqual([
+      {
+        id: "studio-neutral",
+        version: 1,
+        checksum: "f685214cc9a8f47e54faebee825adf815a5355f6f22f1f3d03d0948d0cfa968e",
+      },
+      {
+        id: "warm-craftsman-home",
+        version: 1,
+        checksum: "181e59e6f562bd14ee0ce15ebb30daf21441121a5c9d88b9201f1ee301a8300d",
+      },
+      {
+        id: "forest-camp-evening",
+        version: 1,
+        checksum: "20494e2d416b37ad205dd091e8a3437f79376042fc96bff667f605f9fd19fff6",
+      },
+    ]);
+  });
+
+  it("binds each immutable checksum to assets, visual parameters and renderer versions", () => {
+    for (const release of SCENE_RELEASES) {
+      const calculated = createHash("sha256")
+        .update(serializeSceneReleaseForChecksum(release))
+        .digest("hex");
+      expect(release.checksum).toBe(EXPECTED_RELEASES[release.id]);
+      expect(calculated).toBe(release.checksum);
+      expect(release.renderContract.geometryVersion).toMatch(/-v\d+$/);
+      expect(release.renderContract.rendererVersion).toMatch(/-v\d+$/);
+
+      const assetKeys = new Set(release.assets.map((asset) => asset.key));
+      const assetUrls = new Set(release.assets.map((asset) => asset.url));
+      expect(assetKeys.size).toBe(release.assets.length);
+      expect(assetUrls.size).toBe(release.assets.length);
+      for (const tier of Object.values(release.qualityAssets)) {
+        expect(assetKeys.has(tier.environmentKey)).toBe(true);
+        for (const key of tier.textureKeys) expect(assetKeys.has(key)).toBe(true);
+      }
+      expect(assetKeys.has(release.visual.tableShadow.assetKey)).toBe(true);
+      expect(assetKeys.has("cup-contact-ao")).toBe(true);
+
+      for (const asset of release.assets) {
+        if (asset.key === "cup-contact-ao") {
+          expect(asset.url).toContain(asset.sha256.slice(0, 16));
+        } else {
+          expect(asset.url).toContain(`/v${release.version}/`);
+        }
+        const filename = path.resolve("public", asset.url.slice(1));
+        const contents = readFileSync(filename);
+        expect(contents.byteLength, asset.url).toBe(asset.bytes);
+        expect(createHash("sha256").update(contents).digest("hex"), asset.url).toBe(asset.sha256);
+      }
+    }
   });
 
   it("whitelists scene-only session patches", () => {
@@ -47,6 +111,8 @@ describe("published scene catalog", () => {
         version: published.version,
         checksum: published.checksum,
       });
+      const release = SCENE_RELEASES.find((candidate) => candidate.id === published.id)!;
+      expect(customer.assetUrls).toEqual(Object.fromEntries(release.assets.map((asset) => [asset.key, asset.url])));
     }
     expect(getSceneDescriptor("unpublished-scene").id).toBe("studio-neutral");
   });
@@ -56,7 +122,12 @@ describe("published scene catalog", () => {
     for (const scene of CUSTOMER_SCENES) {
       for (const quality of ["low", "medium", "high"] as const) {
         const assets = scene.qualityAssets[quality];
-        const urls = [assets.environment, ...assets.textures];
+        const urls = [
+          assets.environment,
+          ...assets.textures,
+          scene.tableShadow.url,
+          scene.assetUrls["cup-contact-ao"],
+        ];
         expect(new Set(urls).size).toBe(urls.length);
         const actualBytes = urls.reduce((total, url) => {
           expect(url).toMatch(/^\/scenes\//);
@@ -64,10 +135,8 @@ describe("published scene catalog", () => {
         }, 0);
         expect(actualBytes).toBeLessThanOrEqual(byteBudgets[quality]);
         expect(assets.approximateBytes).toBeLessThanOrEqual(byteBudgets[quality]);
-        expect(Math.abs(assets.approximateBytes - actualBytes)).toBeLessThanOrEqual(1024);
+        expect(assets.approximateBytes).toBe(actualBytes);
       }
-      expect(() => statSync(path.resolve("public", scene.tableShadow.url.slice(1)))).not.toThrow();
     }
-    expect(() => statSync(path.resolve("public/scenes/shared/cup-contact-ao.png"))).not.toThrow();
   });
 });

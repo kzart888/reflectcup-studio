@@ -2,7 +2,7 @@
 
 import { Check, ChevronDown, Clock3, Copy, Eye, Image as ImageIcon, LoaderCircle, Plus, Save, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import type { CameraState, CropTransform, PreviewSession, RenderJob } from "@/lib/contracts";
 import { DEFAULT_CAMERA, DEFAULT_CROP, MAX_INPUT_PIXELS, MAX_UPLOAD_BYTES } from "@/lib/constants";
 import { customerCopy as copy } from "@/i18n/customer";
@@ -18,6 +18,13 @@ type CreatedSession = { session: PreviewSession; resumeUrl: string };
 type CanonicalPreviewState = {
   status: "idle" | "loading" | "ready" | "error";
   key?: string;
+};
+type LocalEditorSnapshot = {
+  generation: number;
+  signature: string;
+  crop: CropTransform;
+  camera: CameraState;
+  sceneId: string;
 };
 
 const RECENT_KEY = "reflectcup.recent-designs.v1";
@@ -170,8 +177,8 @@ async function copyTextToClipboard(value: string): Promise<void> {
   }
 }
 
-function signature(crop: CropTransform, camera: CameraState): string {
-  return JSON.stringify({ crop, camera });
+function signature(crop: CropTransform, camera: CameraState, sceneId: string): string {
+  return JSON.stringify({ crop, camera, sceneId });
 }
 
 function canonicalKey(sourceId: string, crop: CropTransform): string {
@@ -183,6 +190,8 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
   const sessionRef = useRef<PreviewSession | null>(null);
   const [crop, setCrop] = useState<CropTransform>(DEFAULT_CROP);
   const [camera, setCamera] = useState<CameraState>(DEFAULT_CAMERA);
+  const [sceneId, setSceneId] = useState("warm-craftsman-home");
+  const [scenePending, startSceneTransition] = useTransition();
   const [sourceUrl, setSourceUrl] = useState<string>();
   const localSourceUrl = useRef<string | undefined>(undefined);
   const [sourceSize, setSourceSize] = useState<readonly [number, number]>([1, 1]);
@@ -206,18 +215,75 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
   const lastRendered = useRef("");
   const canonicalPreviewRef = useRef<CanonicalPreviewState>({ status: "idle" });
   const saveAbort = useRef<AbortController | undefined>(undefined);
+  const activeSave = useRef<Promise<PreviewSession | null> | null>(null);
+  const saveAgain = useRef(false);
   const renderAbort = useRef<AbortController | undefined>(undefined);
+  const editorSnapshot = useRef<LocalEditorSnapshot>({
+    generation: 0,
+    signature: signature(DEFAULT_CROP, DEFAULT_CAMERA, "warm-craftsman-home"),
+    crop: DEFAULT_CROP,
+    camera: DEFAULT_CAMERA,
+    sceneId: "warm-craftsman-home",
+  });
+
+  const updateLocalCrop = useCallback((nextCrop: CropTransform) => {
+    const current = editorSnapshot.current;
+    const nextSignature = signature(nextCrop, current.camera, current.sceneId);
+    if (nextSignature === current.signature) return;
+    editorSnapshot.current = {
+      ...current,
+      crop: nextCrop,
+      generation: current.generation + 1,
+      signature: nextSignature,
+    };
+    setCrop(nextCrop);
+  }, []);
+
+  const updateLocalCamera = useCallback((nextCamera: CameraState) => {
+    const current = editorSnapshot.current;
+    const nextSignature = signature(current.crop, nextCamera, current.sceneId);
+    if (nextSignature === current.signature) return;
+    editorSnapshot.current = {
+      ...current,
+      camera: nextCamera,
+      generation: current.generation + 1,
+      signature: nextSignature,
+    };
+    setCamera(nextCamera);
+  }, []);
+
+  const updateLocalScene = useCallback((nextSceneId: string) => {
+    const current = editorSnapshot.current;
+    const nextSignature = signature(current.crop, current.camera, nextSceneId);
+    if (nextSignature === current.signature) return;
+    editorSnapshot.current = {
+      ...current,
+      sceneId: nextSceneId,
+      generation: current.generation + 1,
+      signature: nextSignature,
+    };
+    setSceneId(nextSceneId);
+  }, []);
 
   const applySession = useCallback((next: PreviewSession) => {
     sessionRef.current = next;
     setSession(next);
+    const nextSignature = signature(next.crop, next.camera, next.sceneId);
+    editorSnapshot.current = {
+      generation: editorSnapshot.current.generation + 1,
+      signature: nextSignature,
+      crop: next.crop,
+      camera: next.camera,
+      sceneId: next.sceneId,
+    };
     setCrop(next.crop);
     setCamera(next.camera);
+    setSceneId(next.sceneId);
     if (next.source) {
       setSourceUrl((current) => localSourceUrl.current ?? current ?? next.source!.url);
       setSourceSize([next.source.width ?? 1, next.source.height ?? 1]);
     }
-    lastSaved.current = signature(next.crop, next.camera);
+    lastSaved.current = signature(next.crop, next.camera, next.sceneId);
     if (next.preview && next.source) {
       const key = canonicalKey(next.source.id, next.crop);
       lastRendered.current = key;
@@ -315,57 +381,106 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
     }
   }, []);
 
-  const persistCurrent = useCallback(async () => {
-    const current = sessionRef.current;
-    if (!current || current.status !== "draft") return current;
-    const currentSignature = signature(crop, camera);
-    if (currentSignature === lastSaved.current) return current;
-    saveAbort.current?.abort();
-    const controller = new AbortController();
-    saveAbort.current = controller;
-    setSaveState("saving");
-    try {
-      const result = await readEnvelope<{ session: PreviewSession }>(
-        await fetch(`/api/v1/preview-sessions/${current.id}`, {
-          method: "PATCH",
-          signal: controller.signal,
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ revision: current.revision, crop, camera }),
-        }),
-      );
-      sessionRef.current = result.session;
-      setSession(result.session);
-      setCrop(result.session.crop);
-      setCamera(result.session.camera);
-      lastSaved.current = signature(result.session.crop, result.session.camera);
-      await requestCanonicalPreview(result.session, result.session.crop);
-      setSaveState("saved");
-      setRecent(rememberDesign(result.session.id));
-      return result.session;
-    } catch (error) {
-      if (controller.signal.aborted) return sessionRef.current;
-      if ((error as { status?: number }).status === 409) {
-        setConflict(true);
-        setSaveState("unsaved");
-      } else {
-        setSaveState("error");
-      }
-      throw error;
+  const persistCurrent = useCallback((): Promise<PreviewSession | null> => {
+    if (activeSave.current) {
+      saveAgain.current = true;
+      return activeSave.current;
     }
-  }, [camera, crop, requestCanonicalPreview]);
+
+    const run = (async (): Promise<PreviewSession | null> => {
+      do {
+        saveAgain.current = false;
+        const current = sessionRef.current;
+        if (!current || current.status !== "draft") return current;
+
+        const requestedEditor = editorSnapshot.current;
+        if (requestedEditor.signature === lastSaved.current) {
+          setSaveState("saved");
+          return current;
+        }
+
+        const controller = new AbortController();
+        saveAbort.current = controller;
+        setSaveState("saving");
+        try {
+          const result = await readEnvelope<{ session: PreviewSession }>(
+            await fetch(`/api/v1/preview-sessions/${current.id}`, {
+              method: "PATCH",
+              signal: controller.signal,
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                revision: current.revision,
+                crop: requestedEditor.crop,
+                camera: requestedEditor.camera,
+                sceneId: requestedEditor.sceneId,
+              }),
+            }),
+          );
+          sessionRef.current = result.session;
+          setSession(result.session);
+          const responseSignature = signature(result.session.crop, result.session.camera, result.session.sceneId);
+          lastSaved.current = responseSignature;
+          setRecent(rememberDesign(result.session.id));
+
+          const responseStillMatchesEditor = editorSnapshot.current.generation === requestedEditor.generation
+            && editorSnapshot.current.signature === requestedEditor.signature;
+          if (responseStillMatchesEditor) {
+            editorSnapshot.current = {
+              generation: requestedEditor.generation,
+              signature: responseSignature,
+              crop: result.session.crop,
+              camera: result.session.camera,
+              sceneId: result.session.sceneId,
+            };
+            setCrop(result.session.crop);
+            setCamera(result.session.camera);
+            setSceneId(result.session.sceneId);
+            await requestCanonicalPreview(result.session, result.session.crop);
+          }
+
+          const editorStillMatchesResponse = editorSnapshot.current.generation === requestedEditor.generation
+            && editorSnapshot.current.signature === responseSignature;
+          if (editorStillMatchesResponse) {
+            setSaveState("saved");
+          } else {
+            saveAgain.current = true;
+            setSaveState("unsaved");
+          }
+        } catch (error) {
+          if (controller.signal.aborted) return sessionRef.current;
+          if ((error as { status?: number }).status === 409) {
+            setConflict(true);
+            setSaveState("unsaved");
+          } else {
+            setSaveState("error");
+          }
+          throw error;
+        }
+      } while (saveAgain.current);
+
+      return sessionRef.current;
+    })();
+
+    activeSave.current = run;
+    const clearActive = () => {
+      if (activeSave.current === run) activeSave.current = null;
+    };
+    void run.then(clearActive, clearActive);
+    return run;
+  }, [requestCanonicalPreview]);
 
   useEffect(() => {
     if (!session || session.status !== "draft") return;
-    const currentSignature = signature(crop, camera);
+    const currentSignature = signature(crop, camera, sceneId);
     if (currentSignature === lastSaved.current) return;
     setSaveState("unsaved");
     const timer = window.setTimeout(() => void persistCurrent().catch(() => undefined), 650);
     return () => window.clearTimeout(timer);
-  }, [camera, crop, persistCurrent, session]);
+  }, [camera, crop, persistCurrent, sceneId, session]);
 
   useEffect(() => {
     if (!session?.source || session.status !== "draft" || canonicalPreviewState.status !== "idle") return;
-    if (lastSaved.current !== signature(session.crop, session.camera)) return;
+    if (lastSaved.current !== signature(session.crop, session.camera, session.sceneId)) return;
     const timer = window.setTimeout(() => void requestCanonicalPreview(session, session.crop), 0);
     return () => window.clearTimeout(timer);
   }, [canonicalPreviewState.status, requestCanonicalPreview, session]);
@@ -379,7 +494,7 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
       return;
     }
     saveAbort.current?.abort();
-    lastSaved.current = signature(crop, camera);
+    lastSaved.current = signature(crop, camera, sceneId);
     setUploadBusy(true);
     const previousLocal = localSourceUrl.current;
     let nextLocal: string | undefined;
@@ -393,7 +508,7 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
       localSourceUrl.current = nextLocal;
       setSourceUrl(nextLocal);
       setSourceSize(dimensions);
-      setCrop(DEFAULT_CROP);
+      updateLocalCrop(DEFAULT_CROP);
       setPreviewState({ status: "loading" });
       canonicalPreviewRef.current = { status: "idle" };
       setCanonicalPreviewState({ status: "idle" });
@@ -429,6 +544,10 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
       ? canonicalPreviewState.status
       : "loading";
   const previewReady = previewState.status === "ready" && currentCanonicalState === "ready";
+
+  const handleSceneChange = useCallback((nextSceneId: string) => {
+    startSceneTransition(() => updateLocalScene(nextSceneId));
+  }, [updateLocalScene]);
 
   const handlePreviewRetry = async () => {
     const current = sessionRef.current;
@@ -501,7 +620,7 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
         await fetch(`/api/v1/preview-sessions/${duplicate.id}`, {
           method: "PATCH",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ revision: duplicate.revision, crop, camera }),
+          body: JSON.stringify({ revision: duplicate.revision, crop, camera, sceneId }),
         }),
       );
       await requestCanonicalPreview(patched.session, crop);
@@ -603,12 +722,13 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
             sourceSize={sourceSize}
             crop={crop}
             maskUrl={session.opticalRuntime.targetMask.url}
+            contourUrl={session.opticalRuntime.targetContour?.url}
             disabled={locked}
             uploadBusy={uploadBusy}
             error={imageError}
-            onCropChange={setCrop}
+            onCropChange={updateLocalCrop}
             onFileSelected={handleFile}
-            onReset={() => setCrop(DEFAULT_CROP)}
+            onReset={() => updateLocalCrop(DEFAULT_CROP)}
           />
         </div>
         <div className={`${styles.previewPane} ${mobileTab !== "preview" ? styles.mobileHidden : ""}`}>
@@ -623,14 +743,17 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
             resourceRetryNonce={resourceRetryNonce}
             previewState={previewState}
             canonicalState={currentCanonicalState}
+            sceneId={sceneId}
+            sceneDisabled={locked || scenePending}
             onBestView={() => setResetNonce((value) => value + 1)}
+            onSceneChange={handleSceneChange}
             onRetry={() => void handlePreviewRetry()}
             onPreviewStateChange={setPreviewState}
             onCameraChange={(position) => {
               const rounded = position.map((value) => Math.round(value * 10_000) / 10_000) as [number, number, number];
-              setCamera((current) => current.position.every((value, index) => value === rounded[index])
-                ? current
-                : { position: rounded, target: session.opticalRuntime.profile.designCamera.target });
+              if (!editorSnapshot.current.camera.position.every((value, index) => value === rounded[index])) {
+                updateLocalCamera({ position: rounded, target: session.opticalRuntime.profile.designCamera.target });
+              }
             }}
           />
         </div>
@@ -646,7 +769,7 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
       ) : null}
 
       <footer className={styles.confirmBar}>
-        <div><span>Session {session.id.slice(0, 8)}</span><small>Nominal optical profile · physical calibration pending</small></div>
+        <div><span>Session {session.id.slice(0, 8)}</span><small>{session.opticalProfile.label} · physical calibration pending</small></div>
         <button type="button" onClick={() => void handleConfirm()} disabled={!session.source || locked || confirming || uploadBusy || conflict || !previewReady}>
           {confirming ? <LoaderCircle className={styles.spin} size={18} /> : locked ? <Check size={18} /> : <Check size={18} />}
           {locked ? copy.confirmed : confirming ? copy.confirming : copy.confirm}

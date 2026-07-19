@@ -71,12 +71,26 @@ export const plateFragmentShader = /* glsl */ `
   layout(location = 0) out highp vec4 pc_fragColor;
   #define gl_FragColor pc_fragColor
   varying vec2 vUv;
+  varying vec3 vWorldPosition;
+  varying vec3 vWorldNormal;
+  uniform vec3 heroLightDirection;
+  uniform vec3 heroLightColor;
+  uniform float heroLightIntensity;
+  uniform float printAmbient;
   ${opticalSampling}
 
   void main() {
     vec4 printColor = samplePrintedImage(vUv);
     if (printColor.a < 0.01) discard;
-    gl_FragColor = vec4(printColor.rgb, printColor.a * 0.96);
+    vec3 normal = normalize(vWorldNormal);
+    vec3 lightDirection = normalize(heroLightDirection);
+    float diffuse = max(dot(normal, lightDirection), 0.0);
+    vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+    vec3 halfDirection = normalize(lightDirection + viewDirection);
+    float ceramicHighlight = pow(max(dot(normal, halfDirection), 0.0), 46.0) * 0.11;
+    vec3 illumination = vec3(printAmbient) + heroLightColor * diffuse * heroLightIntensity * 0.24;
+    vec3 shaded = printColor.rgb * illumination + heroLightColor * ceramicHighlight;
+    gl_FragColor = vec4(shaded, printColor.a * 0.965);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
@@ -94,15 +108,20 @@ export const cupFragmentShader = /* glsl */ `
   uniform float dishRadius;
   uniform float sphereRadius;
   uniform float dishSag;
-  uniform sampler2D environmentMap;
+  uniform sampler2D envMap;
+  uniform mat3 environmentRotation;
+  uniform float environmentIntensity;
+  uniform float mirrorRoughness;
+  uniform vec3 dishBaseColor;
   ${DISH_REFLECTION_GLSL}
+  #include <cube_uv_reflection_fragment>
 
   vec3 sampleEnvironment(vec3 direction) {
-    vec2 uv = vec2(
-      atan(direction.z, direction.x) / 6.28318530718 + 0.5,
-      asin(clamp(direction.y, -1.0, 1.0)) / 3.14159265359 + 0.5
-    );
-    return texture(environmentMap, uv).rgb;
+    #ifdef ENVMAP_TYPE_CUBE_UV
+      return textureCubeUV(envMap, environmentRotation * direction, mirrorRoughness).rgb * environmentIntensity;
+    #else
+      return vec3(0.18);
+    #endif
   }
 
   void main() {
@@ -112,19 +131,31 @@ export const cupFragmentShader = /* glsl */ `
     vec3 environment = sampleEnvironment(reflectionDirection);
     vec3 plateHit;
     vec4 printed = vec4(0.0);
-    if (reflectCupIntersectDish(vWorldPosition + reflectionDirection * 0.0002, reflectionDirection, dishCenter, dishRadius, sphereRadius, dishSag, plateHit)) {
+    bool dishWasHit = reflectCupIntersectDish(
+      vWorldPosition + reflectionDirection * 0.0002,
+      reflectionDirection,
+      dishCenter,
+      dishRadius,
+      sphereRadius,
+      dishSag,
+      plateHit
+    );
+    if (dishWasHit) {
       vec2 printUv = reflectCupPrintUv(plateHit, dishCenter, dishRadius);
       printed = samplePrintedImage(printUv);
     }
 
     float facing = clamp(dot(-incident, normal), 0.0, 1.0);
-    float fresnel = 0.68 + 0.32 * pow(1.0 - facing, 5.0);
-    vec3 mirrorColor = environment * vec3(0.94, 0.91, 0.82);
-    if (printed.a > 0.01) {
-      mirrorColor = mix(mirrorColor, printed.rgb, printed.a * 0.88);
+    float fresnel = 0.76 + 0.24 * pow(1.0 - facing, 5.0);
+    vec3 reflectedColor = environment * vec3(0.985, 0.99, 0.985);
+    if (dishWasHit) {
+      // The plate is an opaque ceramic surface even where the printable LUT
+      // has no coverage. Transparency means "no ink", not a hole through
+      // which the distant environment remains visible.
+      reflectedColor = mix(dishBaseColor, printed.rgb, printed.a);
     }
-    mirrorColor *= fresnel;
-    mirrorColor += vec3(0.035, 0.028, 0.018);
+    vec3 mirrorColor = reflectedColor * fresnel;
+    mirrorColor += vec3(0.012);
     gl_FragColor = vec4(mirrorColor, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>

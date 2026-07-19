@@ -1,9 +1,12 @@
 "use client";
 
-import { Focus, LoaderCircle, MousePointer2, RefreshCw, TriangleAlert } from "lucide-react";
+import { Focus, Layers3, LoaderCircle, MousePointer2, RefreshCw, TriangleAlert } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import type { CameraState, CropTransform, OpticalRuntime, PreviewRuntimeSettings } from "@/lib/contracts";
 import { customerCopy as copy } from "@/i18n/customer";
 import { ReflectiveCupPreview, type PreviewLoadState } from "@/rendering/ReflectiveCupPreview";
+import { CUSTOMER_SCENES, preloadSceneAssets } from "@/scenes/catalog";
+import { browserSceneRuntimeHints, initialSceneQuality } from "@/scenes/runtime-policy";
 import styles from "@/components/preview/preview-panel.module.css";
 
 type Props = {
@@ -17,21 +20,67 @@ type Props = {
   resourceRetryNonce: number;
   previewState: PreviewLoadState;
   canonicalState: "idle" | "loading" | "ready" | "error";
+  sceneId: string;
+  sceneDisabled?: boolean;
   onBestView: () => void;
+  onSceneChange: (sceneId: string) => void | Promise<void>;
   onRetry: () => void;
   onCameraChange: (position: readonly [number, number, number]) => void;
   onPreviewStateChange: (state: PreviewLoadState) => void;
 };
 
-export function PreviewPanel({ sourceUrl, sourceSize, crop, camera, opticalRuntime, previewSettings, resetNonce, resourceRetryNonce, previewState, canonicalState, onBestView, onRetry, onCameraChange, onPreviewStateChange }: Props) {
+export function PreviewPanel({ sourceUrl, sourceSize, crop, camera, opticalRuntime, previewSettings, resetNonce, resourceRetryNonce, previewState, canonicalState, sceneId, sceneDisabled = false, onBestView, onSceneChange, onRetry, onCameraChange, onPreviewStateChange }: Props) {
+  const sceneLoad = useRef<AbortController | undefined>(undefined);
+  const [sceneBusy, setSceneBusy] = useState(false);
+  const [failedSceneId, setFailedSceneId] = useState<string>();
+  useEffect(() => () => sceneLoad.current?.abort(), []);
+  const changeScene = async (nextSceneId: string) => {
+    if (nextSceneId === sceneId && !failedSceneId) return;
+    sceneLoad.current?.abort();
+    const controller = new AbortController();
+    sceneLoad.current = controller;
+    setSceneBusy(true);
+    setFailedSceneId(undefined);
+    try {
+      const preloadQuality = initialSceneQuality(browserSceneRuntimeHints());
+      await preloadSceneAssets(nextSceneId, controller.signal, preloadQuality);
+      if (!controller.signal.aborted) await onSceneChange(nextSceneId);
+    } catch {
+      if (!controller.signal.aborted) setFailedSceneId(nextSceneId);
+    } finally {
+      if (!controller.signal.aborted) setSceneBusy(false);
+    }
+  };
   const failed = previewState.status === "error" || canonicalState === "error";
   const loading = Boolean(sourceUrl) && !failed && (previewState.status !== "ready" || canonicalState === "loading");
   return (
     <section className={styles.panel} aria-label={copy.accessibilityPreview}>
       <div className={styles.heading}>
         <div><p>02 · Preview</p><h2>{copy.previewTitle}</h2></div>
-        <button type="button" onClick={onBestView}><Focus size={17} /> {copy.bestView}</button>
+        <div className={styles.headingActions}>
+          <label className={styles.sceneSelect}>
+            {sceneBusy ? <LoaderCircle className={styles.spin} size={16} /> : <Layers3 size={16} />}
+            <span className={styles.srOnly}>{copy.sceneLabel}</span>
+            <select
+              aria-label={copy.sceneLabel}
+              value={sceneId}
+              disabled={sceneDisabled}
+              onChange={(event) => void changeScene(event.target.value)}
+            >
+              {CUSTOMER_SCENES.map((scene) => <option key={scene.id} value={scene.id}>{scene.shortLabel}</option>)}
+            </select>
+          </label>
+          <button type="button" onClick={onBestView}><Focus size={17} /> {copy.bestView}</button>
+        </div>
       </div>
+      {failedSceneId ? (
+        <div className={styles.sceneError} role="alert">
+          <span>{copy.sceneLoadFailed}</span>
+          <button type="button" onClick={() => void changeScene(failedSceneId)}>
+            <RefreshCw size={14} /> {copy.retryScene}
+          </button>
+        </div>
+      ) : null}
       <div className={styles.stage}>
         <ReflectiveCupPreview
           className={styles.canvas}
@@ -41,6 +90,7 @@ export function PreviewPanel({ sourceUrl, sourceSize, crop, camera, opticalRunti
           cameraState={camera}
           opticalRuntime={opticalRuntime}
           previewSettings={previewSettings}
+          sceneId={sceneId}
           resetNonce={resetNonce}
           resourceRetryNonce={resourceRetryNonce}
           onCameraChange={onCameraChange}

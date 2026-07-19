@@ -3,6 +3,7 @@
 import { ImagePlus, RefreshCcw, Replace, ZoomIn } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { CropTransform } from "@/lib/contracts";
+import type { TargetContourDocument, Vec2 } from "@/optics";
 import { customerCopy as copy } from "@/i18n/customer";
 import styles from "@/components/editor/image-crop-editor.module.css";
 
@@ -11,6 +12,7 @@ type Props = {
   sourceSize?: readonly [number, number];
   crop: CropTransform;
   maskUrl: string;
+  contourUrl?: string;
   disabled?: boolean;
   uploadBusy?: boolean;
   error?: string;
@@ -70,11 +72,35 @@ async function createMaskOverlay(maskUrl: string): Promise<string> {
   return canvas.toDataURL("image/png");
 }
 
+function midpoint(first: Vec2, second: Vec2): Vec2 {
+  return [(first[0] + second[0]) / 2, (first[1] + second[1]) / 2];
+}
+
+function smoothClosedPath(points: readonly Vec2[]): string {
+  if (points.length < 3) return "";
+  const start = midpoint(points.at(-1)!, points[0]);
+  const commands = [`M ${start[0]} ${start[1]}`];
+  for (let index = 0; index < points.length; index += 1) {
+    const current = points[index];
+    const next = points[(index + 1) % points.length];
+    const nextMidpoint = midpoint(current, next);
+    commands.push(`Q ${current[0]} ${current[1]} ${nextMidpoint[0]} ${nextMidpoint[1]}`);
+  }
+  commands.push("Z");
+  return commands.join(" ");
+}
+
+function contourDocumentPath(document: TargetContourDocument): string {
+  if (document.schemaVersion !== 1 || document.coordinateSpace !== "target-uv") return "";
+  return document.paths.map((path) => smoothClosedPath(path.points)).filter(Boolean).join(" ");
+}
+
 export function ImageCropEditor({
   sourceUrl,
   sourceSize = [1, 1],
   crop,
   maskUrl,
+  contourUrl,
   disabled = false,
   uploadBusy = false,
   error,
@@ -93,13 +119,42 @@ export function ImageCropEditor({
     crop: CropTransform;
   } | null>(null);
   const [maskOverlayUrl, setMaskOverlayUrl] = useState("");
+  const [contourPath, setContourPath] = useState("");
   useEffect(() => {
     let active = true;
-    void createMaskOverlay(maskUrl)
-      .then((url) => { if (active) setMaskOverlayUrl(url); })
-      .catch(() => { if (active) setMaskOverlayUrl(""); });
+    const loadOverlay = async () => {
+      if (contourUrl) {
+        try {
+          const response = await fetch(contourUrl, { cache: "force-cache" });
+          if (!response.ok) throw new Error("Target contour failed to load");
+          const path = contourDocumentPath(await response.json() as TargetContourDocument);
+          if (!path) throw new Error("Target contour is empty");
+          if (active) {
+            setContourPath(path);
+            setMaskOverlayUrl("");
+          }
+          return;
+        } catch {
+          // Older immutable profiles do not carry a contour resource. Keep
+          // their raster mask available as a compatibility fallback.
+        }
+      }
+      try {
+        const url = await createMaskOverlay(maskUrl);
+        if (active) {
+          setContourPath("");
+          setMaskOverlayUrl(url);
+        }
+      } catch {
+        if (active) {
+          setContourPath("");
+          setMaskOverlayUrl("");
+        }
+      }
+    };
+    void loadOverlay();
     return () => { active = false; };
-  }, [maskUrl]);
+  }, [contourUrl, maskUrl]);
 
   const imageStyle = useMemo(() => {
     const aspect = sourceSize[0] / Math.max(sourceSize[1], 1);
@@ -236,7 +291,13 @@ export function ImageCropEditor({
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img className={styles.sourceImage} src={sourceUrl} alt="Uploaded source" draggable={false} style={imageStyle} />
-          {maskOverlayUrl ? (
+          {contourPath ? (
+            <svg className={styles.maskVector} viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+              <path className={styles.maskDim} d={`M 0 0 H 1 V 1 H 0 Z ${contourPath}`} fillRule="evenodd" />
+              <path className={styles.maskBoundaryBase} d={contourPath} fill="none" vectorEffect="non-scaling-stroke" />
+              <path className={styles.maskBoundary} d={contourPath} fill="none" vectorEffect="non-scaling-stroke" />
+            </svg>
+          ) : maskOverlayUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img className={styles.mask} src={maskOverlayUrl} alt="" aria-hidden="true" draggable={false} />
           ) : null}

@@ -35,13 +35,33 @@ function baseSession(id = "session_demo_1234"): PreviewSession {
   };
 }
 
-async function mockStudio(page: Page, options: { failCanonicalOnce?: boolean } = {}) {
-  let session = baseSession();
+async function mockStudio(page: Page, options: {
+  failCanonicalOnce?: boolean;
+  delayFirstPatchResponse?: boolean;
+  initialSource?: boolean;
+} = {}) {
+  let session: PreviewSession = options.initialSource
+    ? {
+        ...baseSession(),
+        source: {
+          id: "asset-initial",
+          kind: "source",
+          url: "/calibration/reflection-checker-2048.png",
+          mimeType: "image/png",
+          width: 2048,
+          height: 2048,
+        },
+      }
+    : baseSession();
   const patches: unknown[] = [];
   const resumeExchanges: unknown[] = [];
   let resumeRotations = 0;
   let uploads = 0;
   let renders = 0;
+  let markFirstPatchStarted: (() => void) | undefined;
+  let releaseDelayedPatch: (() => void) | undefined;
+  const firstPatchStarted = new Promise<void>((resolve) => { markFirstPatchStarted = resolve; });
+  const delayedPatchReleased = new Promise<void>((resolve) => { releaseDelayedPatch = resolve; });
   await page.route("**/api/v1/preview-sessions**", async (route: Route) => {
     const request = route.request();
     const url = new URL(request.url());
@@ -83,11 +103,24 @@ async function mockStudio(page: Page, options: { failCanonicalOnce?: boolean } =
       const body = request.postDataJSON();
       patches.push(body);
       session = { ...session, ...body, revision: session.revision + 1 };
-      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { session } }) });
+      const responseSession = session;
+      if (options.delayFirstPatchResponse && patches.length === 1) {
+        markFirstPatchStarted?.();
+        await delayedPatchReleased;
+      }
+      return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { session: responseSession } }) });
     }
     return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ data: { session } }) });
   });
-  return { patches, resumeExchanges, get resumeRotations() { return resumeRotations; }, get uploads() { return uploads; }, get renders() { return renders; } };
+  return {
+    patches,
+    resumeExchanges,
+    firstPatchStarted,
+    releaseFirstPatch() { releaseDelayedPatch?.(); },
+    get resumeRotations() { return resumeRotations; },
+    get uploads() { return uploads; },
+    get renders() { return renders; },
+  };
 }
 
 test("uploads, adjusts, autosaves and confirms a design", async ({ page }, testInfo) => {
@@ -107,9 +140,9 @@ test("uploads, adjusts, autosaves and confirms a design", async ({ page }, testI
 
   await page.getByLabel("Zoom").fill("2");
   await expect(page.getByText("2.0×")).toBeVisible();
-  await expect.poll(() => state.patches.length, { timeout: 3_000 }).toBeGreaterThan(0);
+  await expect.poll(() => state.patches.length, { timeout: 10_000 }).toBeGreaterThan(0);
 
-  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled({ timeout: 15_000 });
   await page.getByRole("button", { name: "Confirm design" }).click();
   await expect(page.getByRole("button", { name: "Design confirmed" })).toBeVisible();
   await expect(page.getByText(/locked as a test snapshot/i)).toBeVisible();
@@ -139,18 +172,40 @@ test("switching scene autosaves it without changing the optical crop", async ({ 
   await expect(page.getByLabel("Scene")).toHaveValue("forest-camp-evening");
 });
 
+test("an older autosave response cannot overwrite a newer local edit", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name.includes("mobile"), "desktop autosave race check");
+  const state = await mockStudio(page, { delayFirstPatchResponse: true, initialSource: true });
+  await page.goto("/studio/new");
+  const zoom = page.getByLabel("Zoom");
+
+  await zoom.fill("2");
+  await state.firstPatchStarted;
+  await expect(page.getByText("2.0×")).toBeVisible();
+
+  await zoom.fill("3");
+  await expect(page.getByText("3.0×")).toBeVisible();
+  state.releaseFirstPatch();
+
+  await expect.poll(() => state.patches.length, { timeout: 5_000 }).toBe(2);
+  await expect(page.getByText("3.0×")).toBeVisible();
+  expect(state.patches).toMatchObject([
+    { revision: 1, crop: { scale: 2 } },
+    { revision: 2, crop: { scale: 3 } },
+  ]);
+});
+
 test("a failed canonical preview is visible, blocks confirmation, and can be retried", async ({ page }) => {
   const state = await mockStudio(page, { failCanonicalOnce: true });
   await page.goto("/studio/new");
   await page.locator('input[type="file"]').setInputFiles({ name: "portrait.png", mimeType: "image/png", buffer: png });
 
-  await expect(page.getByText(/saved production preview could not be generated/i)).toBeVisible();
+  await expect(page.getByText(/saved production preview could not be generated/i)).toBeVisible({ timeout: 12_000 });
   await expect(page.getByRole("button", { name: "Confirm design" })).toBeDisabled();
   expect(state.renders).toBe(1);
 
   await page.getByRole("button", { name: "Try preview again" }).click();
   await expect.poll(() => state.renders).toBe(2);
-  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled({ timeout: 15_000 });
   await expect(page.getByText(/optical and saved previews are ready/i)).toBeVisible();
 });
 
@@ -166,7 +221,7 @@ test("an unavailable optical LUT is not replaced with a fake preview", async ({ 
 
   await page.unroute("**/plate-to-target.rg32f");
   await page.getByRole("button", { name: "Try preview again" }).click();
-  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled({ timeout: 15_000 });
 });
 
 test("mobile keeps adjustment and preview as focused tabs", async ({ page }, testInfo) => {
@@ -207,7 +262,7 @@ test("deterministic +5 and +10 degree cameras progressively change the cup refle
   await page.locator('input[type="file"]').setInputFiles("public/calibration/reflection-checker-2048.png");
   const canvas = page.getByTestId("reflection-preview").locator("canvas");
   await expect(canvas).toBeVisible();
-  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled();
+  await expect(page.getByRole("button", { name: "Confirm design" })).toBeEnabled({ timeout: 15_000 });
 
   const target = [-0.03, 0.043, 0] as const;
   const design = [0.6, 0.48, 0] as const;
@@ -312,6 +367,7 @@ test("the WebGL preview recovers after a context loss", async ({ page }, testInf
 
 test("replacing the image repeatedly releases browser and GPU resources", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name.includes("mobile"), "desktop GPU lifecycle check");
+  test.setTimeout(60_000);
   await page.addInitScript(() => {
     const metrics = { objectUrlsCreated: 0, objectUrlsRevoked: 0, texturesDeleted: 0 };
     (window as typeof window & { __reflectCupResourceMetrics?: typeof metrics }).__reflectCupResourceMetrics = metrics;

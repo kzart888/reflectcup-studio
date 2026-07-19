@@ -2,6 +2,8 @@ import { fnv1a64 } from "./checksum";
 import { buildTargetContourDocument } from "./contour";
 import { distance2, signedArea2 } from "./math";
 import { traceTargetToPlate } from "./geometry";
+import { CURVED_REVERSIBLE_OPTICAL_GENERATOR_VERSION } from "./profile";
+import { samplePlateTargetLut } from "./renderer";
 import type {
   GeneratedOpticalProfile,
   OpticalProfile,
@@ -12,6 +14,8 @@ import type {
 } from "./types";
 
 type Triangle = readonly [TargetPlateSample, TargetPlateSample, TargetPlateSample];
+
+export const MAX_CORE_TARGET_ROUND_TRIP_SAMPLES = 1;
 
 export function generateTargetPlateMap(profile: OpticalProfile): TargetPlateMap {
   const [width, height] = profile.mapping.targetSamples;
@@ -103,7 +107,8 @@ function rasterizeTriangle(triangle: Triangle, lut: PlateTargetLut, orientation:
 
 export function invertTargetPlateMap(
   profile: OpticalProfile,
-  map: TargetPlateMap = generateTargetPlateMap(profile)
+  map: TargetPlateMap = generateTargetPlateMap(profile),
+  targetMask?: Uint8Array,
 ): PlateTargetLut {
   const [width, height] = profile.mapping.lutSize;
   if (width < 2 || height < 2) throw new Error("lutSize must be at least 2 by 2");
@@ -113,7 +118,16 @@ export function invertTargetPlateMap(
     targetUv: new Float32Array(width * height * 2),
     validMask: new Uint8Array(width * height)
   };
-  const triangles = dominantTriangles(profile, map);
+  if (targetMask && targetMask.length !== map.width * map.height) {
+    throw new Error("targetMask dimensions must match the target-to-plate map");
+  }
+  const triangles = dominantTriangles(profile, map).filter((triangle) => (
+    !targetMask || triangle.every((sample) => {
+      const x = Math.round(sample.targetUv[0] * (map.width - 1));
+      const y = Math.round(sample.targetUv[1] * (map.height - 1));
+      return targetMask[y * map.width + x] !== 0;
+    })
+  ));
   for (const triangle of triangles) rasterizeTriangle(triangle, lut, Math.sign(
     signedArea2(triangle[0].plateUv, triangle[1].plateUv, triangle[2].plateUv)
   ));
@@ -164,7 +178,7 @@ function keepLargestConnectedComponent(mask: Uint8Array, width: number, height: 
   return result;
 }
 
-export function buildTargetCoreMask(profile: OpticalProfile, map: TargetPlateMap): Uint8Array {
+function buildDominantTargetMask(profile: OpticalProfile, map: TargetPlateMap): Uint8Array {
   const accepted = new Uint8Array(map.width * map.height);
   for (const triangle of dominantTriangles(profile, map)) {
     for (const sample of triangle) {
@@ -174,6 +188,40 @@ export function buildTargetCoreMask(profile: OpticalProfile, map: TargetPlateMap
     }
   }
   return keepLargestConnectedComponent(accepted, map.width, map.height);
+}
+
+export function buildTargetReversibleCoreMask(
+  profile: OpticalProfile,
+  map: TargetPlateMap,
+  plateToTarget: PlateTargetLut,
+  candidateMask: Uint8Array = buildDominantTargetMask(profile, map),
+): Uint8Array {
+  if (candidateMask.length !== map.width * map.height) {
+    throw new Error("candidateMask dimensions must match the target-to-plate map");
+  }
+  const accepted = new Uint8Array(candidateMask.length);
+  for (let index = 0; index < candidateMask.length; index += 1) {
+    if (candidateMask[index] === 0) continue;
+    const sample = map.samples[index];
+    if (!sample) continue;
+    const inverse = samplePlateTargetLut(plateToTarget, sample.plateUv);
+    if (!inverse) continue;
+    const errorInSamples = Math.hypot(
+      (inverse[0] - sample.targetUv[0]) * (map.width - 1),
+      (inverse[1] - sample.targetUv[1]) * (map.height - 1),
+    );
+    if (errorInSamples <= MAX_CORE_TARGET_ROUND_TRIP_SAMPLES) accepted[index] = 255;
+  }
+  return keepLargestConnectedComponent(accepted, map.width, map.height);
+}
+
+export function buildTargetCoreMask(profile: OpticalProfile, map: TargetPlateMap): Uint8Array {
+  const candidateMask = buildDominantTargetMask(profile, map);
+  if (profile.mapping.generatorVersion !== CURVED_REVERSIBLE_OPTICAL_GENERATOR_VERSION) {
+    return candidateMask;
+  }
+  const plateToTarget = invertTargetPlateMap(profile, map, candidateMask);
+  return buildTargetReversibleCoreMask(profile, map, plateToTarget, candidateMask);
 }
 
 /**
@@ -186,9 +234,24 @@ export function buildTargetValidMask(map: TargetPlateMap): Uint8Array {
 
 export function generateOpticalProfile(profile: OpticalProfile): GeneratedOpticalProfile {
   const targetToPlate = generateTargetPlateMap(profile);
-  const plateToTarget = invertTargetPlateMap(profile, targetToPlate);
+  const reversible = profile.mapping.generatorVersion === CURVED_REVERSIBLE_OPTICAL_GENERATOR_VERSION;
+  const candidateMask = buildDominantTargetMask(profile, targetToPlate);
+  const candidatePlateToTarget = invertTargetPlateMap(
+    profile,
+    targetToPlate,
+    reversible ? candidateMask : undefined,
+  );
   const rayHitMask = buildTargetRayHitMask(targetToPlate);
-  const coreMask = buildTargetCoreMask(profile, targetToPlate);
+  const coreMask = reversible
+    ? buildTargetReversibleCoreMask(profile, targetToPlate, candidatePlateToTarget, candidateMask)
+    : candidateMask;
+  // The first inverse pass establishes which target samples are reversible. A
+  // second v3-only pass prevents the published inverse LUT from referring back
+  // to samples outside that customer-visible core. Historical generators keep
+  // their original single-pass bytes exactly.
+  const plateToTarget = reversible
+    ? invertTargetPlateMap(profile, targetToPlate, coreMask)
+    : candidatePlateToTarget;
   const lutChecksum = fnv1a64(plateToTarget.targetUv) + fnv1a64(plateToTarget.validMask);
   return {
     profile: {

@@ -4,17 +4,18 @@ import path from "node:path";
 import sharp from "sharp";
 import {
   createCurvedCupOpticalProfile,
+  createCurvedCupOpticalProfileV3,
   createNominalOpticalProfile,
   generateOpticalProfile
 } from "../../src/optics";
 
-type ProfileSelection = "nominal-v1" | "curved-cup-v2";
+type ProfileSelection = "nominal-v1" | "curved-cup-v2" | "curved-cup-v3";
 
 function readProfileSelection(): ProfileSelection {
   const profileIndex = process.argv.indexOf("--profile");
   const requested = profileIndex >= 0 ? process.argv[profileIndex + 1] : "nominal-v1";
-  if (requested !== "nominal-v1" && requested !== "curved-cup-v2") {
-    throw new Error("--profile must be nominal-v1 or curved-cup-v2");
+  if (requested !== "nominal-v1" && requested !== "curved-cup-v2" && requested !== "curved-cup-v3") {
+    throw new Error("--profile must be nominal-v1, curved-cup-v2 or curved-cup-v3");
   }
   return requested;
 }
@@ -34,9 +35,14 @@ async function main() {
   const selection = readProfileSelection();
   const outputDirectory = readOutputDirectory(selection);
   // Published means selectable by the digital MVP, not physically calibrated.
-  const generated = generateOpticalProfile(selection === "nominal-v1"
-    ? createNominalOpticalProfile({ status: "published" })
-    : createCurvedCupOpticalProfile({ status: "published" }));
+  const generated = generateOpticalProfile(
+    selection === "nominal-v1"
+      ? createNominalOpticalProfile({ status: "published" })
+      : selection === "curved-cup-v2"
+        ? createCurvedCupOpticalProfile({ status: "published" })
+        : createCurvedCupOpticalProfileV3({ status: "published" }),
+  );
+  const hasCoreRegionAssets = selection !== "nominal-v1";
   const lutBytes = Buffer.from(
     generated.plateToTarget.targetUv.buffer,
     generated.plateToTarget.targetUv.byteOffset,
@@ -44,7 +50,7 @@ async function main() {
   );
   const plateMaskBytes = Buffer.from(generated.plateToTarget.validMask);
   // nominal-v1 is an immutable published fixture: its historical target-valid-mask is the
-  // raw ray-hit diagnostic. v2 introduces an explicit customer core mask and debug mask.
+  // raw ray-hit diagnostic. Curved releases carry an explicit customer core mask and debug mask.
   const targetMaskBytes = Buffer.from(selection === "nominal-v1"
     ? generated.targetRegion.rayHitMask
     : generated.targetRegion.coreMask);
@@ -56,11 +62,11 @@ async function main() {
   }).png().toBuffer();
   const profileJson = Buffer.from(JSON.stringify(generated.profile, null, 2));
   const contourJson = Buffer.from(JSON.stringify(generated.targetRegion.contour, null, 2));
-  const rayHitMaskPng = selection === "curved-cup-v2" ? await sharp(generated.targetRegion.rayHitMask, {
+  const rayHitMaskPng = hasCoreRegionAssets ? await sharp(generated.targetRegion.rayHitMask, {
     raw: { width: generated.targetToPlate.width, height: generated.targetToPlate.height, channels: 1 }
   }).png().toBuffer() : undefined;
-  const coreMaskPng = selection === "curved-cup-v2" ? targetMaskPng : undefined;
-  const extraFiles = selection === "curved-cup-v2" ? {
+  const coreMaskPng = hasCoreRegionAssets ? targetMaskPng : undefined;
+  const extraFiles = hasCoreRegionAssets ? {
     "target-ray-hit-mask.png": {
       bytes: rayHitMaskPng!.byteLength,
       sha256: sha256(rayHitMaskPng!),
@@ -100,7 +106,7 @@ async function main() {
     writeFile(path.join(outputDirectory, "plate-valid-mask.png"), plateMaskPng),
     writeFile(path.join(outputDirectory, "target-valid-mask.png"), targetMaskPng)
   ];
-  if (selection === "curved-cup-v2") {
+  if (hasCoreRegionAssets) {
     writes.push(
       writeFile(path.join(outputDirectory, "target-ray-hit-mask.png"), rayHitMaskPng!),
       writeFile(path.join(outputDirectory, "target-core-mask.png"), coreMaskPng!),

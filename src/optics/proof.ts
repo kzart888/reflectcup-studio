@@ -27,8 +27,12 @@ export function sampleTargetPlateMap(map: TargetPlateMap, targetUv: Vec2): Vec2 
 }
 
 function sampleImage(image: RawRgbaImage, uv: Vec2): readonly [number, number, number, number] {
-  const x = clamp(uv[0], 0, 1) * (image.width - 1);
-  const y = clamp(uv[1], 0, 1) * (image.height - 1);
+  // Plate UV describes physical texel edges: canonical pixels are authored at
+  // (x + 0.5) / width. Convert back with the matching half-texel offset. This
+  // differs intentionally from target/source UV, whose endpoints are pixel
+  // centres on the desired-image lattice.
+  const x = clamp(uv[0] * image.width - 0.5, 0, image.width - 1);
+  const y = clamp(uv[1] * image.height - 0.5, 0, image.height - 1);
   const x0 = Math.floor(x);
   const y0 = Math.floor(y);
   const x1 = Math.min(image.width - 1, x0 + 1);

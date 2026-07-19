@@ -11,6 +11,7 @@ import {
   renderJobs,
   storageDeletionOutbox
 } from "@/db/schema";
+import { assetStorageKeys } from "@/repositories/assets";
 import {
   countPendingStorageDeletions,
   processStorageDeletionOutbox,
@@ -89,10 +90,9 @@ export async function expireStaleSessions(
       if (storedAssets.length > 0) {
         await transaction
           .insert(storageDeletionOutbox)
-          .values(storageDeletionValues(storedAssets.map((asset) => ({
-            storageKey: asset.storageKey,
-            reason: "session_retention_expired"
-          }))))
+          .values(storageDeletionValues(storedAssets.flatMap((asset) => (
+            assetStorageKeys(asset).map((storageKey) => ({ storageKey, reason: "session_retention_expired" }))
+          ))))
           .onConflictDoUpdate(storageDeletionConflictClause());
         await transaction.delete(assets).where(inArray(assets.id, storedAssets.map((asset) => asset.id)));
       }
@@ -108,7 +108,7 @@ export async function expireStaleSessions(
       });
       return storedAssets;
     });
-    const storageKeys = stored.map((asset) => asset.storageKey);
+    const storageKeys = stored.flatMap(assetStorageKeys);
     await processStorageDeletionOutbox({ limit: Math.max(20, stored.length), storage }).catch((error: unknown) => {
       console.error("Expired session objects remain queued for retry", error);
     });

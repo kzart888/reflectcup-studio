@@ -2,9 +2,18 @@
 .heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .heading p { margin: 0 0 4px; color: var(--accent); font-size: .7rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .heading h2 { margin: 0; font-family: Georgia,"Times New Roman",serif; font-size: clamp(1.45rem,2.2vw,2.15rem); font-weight: 500; letter-spacing: -.025em; }
-.heading button { min-height: 40px; border: 1px solid rgba(31,36,33,.15); border-radius: 999px; background: rgba(255,255,255,.68); display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; cursor: pointer; font-weight: 720; font-size: .78rem; }
+.headingActions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.heading button { min-height: 44px; border: 1px solid rgba(31,36,33,.15); border-radius: 999px; background: rgba(255,255,255,.68); display: inline-flex; align-items: center; gap: 7px; padding: 0 14px; cursor: pointer; font-weight: 720; font-size: .78rem; }
 .heading button:hover { background: white; }
 .heading button:focus-visible { outline: 3px solid rgba(29,91,79,.23); outline-offset: 2px; }
+.sceneSelect { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid rgba(31,36,33,.15); border-radius: 999px; background: rgba(255,255,255,.68); padding: 0 7px 0 12px; color: var(--ink); }
+.sceneSelect select { max-width: 132px; border: 0; outline: 0; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: .78rem; font-weight: 720; }
+.sceneSelect:focus-within { outline: 3px solid rgba(29,91,79,.23); outline-offset: 2px; }
+.sceneSelect:has(select:disabled) { opacity: .6; }
+.sceneError { margin: -6px 0 0; border-radius: 10px; background: rgba(163,60,49,.08); padding: 8px 10px; color: var(--danger); font-size: .72rem; display:flex; align-items:center; gap:10px; }
+.sceneError span { flex:1; }
+.sceneError button { min-height:36px; border:1px solid rgba(163,60,49,.2); border-radius:999px; background:#fff; color:var(--danger); padding:0 11px; display:inline-flex; align-items:center; gap:6px; cursor:pointer; font:inherit; font-weight:750; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .stage { position: relative; flex: 1; min-height: 420px; overflow: hidden; border-radius: 24px; background: #ebe7df; box-shadow: inset 0 0 0 1px rgba(255,255,255,.72), 0 18px 48px rgba(39,43,40,.1); }
 .canvas { position: absolute; inset: 0; }
 .empty { position: absolute; inset: auto 50% 24px auto; transform: translateX(50%); display: flex; align-items: center; gap: 8px; border-radius: 999px; background: rgba(255,255,255,.82); backdrop-filter: blur(10px); padding: 9px 13px; color: var(--muted); font-size: .76rem; pointer-events: none; white-space: nowrap; }
@@ -19,4 +28,5 @@
 .badge { position: absolute; top: 14px; left: 14px; border-radius: 999px; background: rgba(24,31,28,.68); color: white; backdrop-filter: blur(10px); padding: 6px 9px; font-size: .62rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; pointer-events: none; }
 .hint { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.45; }
 @keyframes spin { to { transform: rotate(360deg); } }
-@media (max-width:760px){.panel{padding:16px 12px 98px}.stage{min-height:0;height:calc(100svh - 245px);flex:none;border-radius:18px}.heading h2{font-size:1.55rem}.empty,.loading{max-width:calc(100% - 24px);white-space:normal}.hint{padding:0 4px}.canonicalError{align-items:flex-start;flex-wrap:wrap}.canonicalError span{min-width:calc(100% - 28px)}.canonicalError button{margin-left:24px}}
+@media (max-width:760px){.panel{padding:16px 12px 98px}.stage{min-height:0;height:calc(100svh - 245px);flex:none;border-radius:18px}.heading{align-items:flex-start}.heading h2{font-size:1.55rem}.headingActions{gap:6px}.heading button{width:44px;padding:0;justify-content:center;font-size:0}.heading button svg{width:17px;height:17px}.sceneSelect{padding-left:9px}.sceneSelect select{max-width:104px;font-size:.72rem}.empty,.loading{max-width:calc(100% - 24px);white-space:normal}.hint{padding:0 4px}.canonicalError{align-items:flex-start;flex-wrap:wrap}.canonicalError span{min-width:calc(100% - 28px)}.canonicalError button{margin-left:24px}}
+@media (max-width:360px){.heading{flex-wrap:wrap;gap:10px}.headingActions{width:100%;justify-content:space-between}.sceneSelect{flex:1;min-width:0}.sceneSelect select{max-width:none;width:100%}.sceneError{align-items:flex-start;flex-wrap:wrap}.sceneError button{margin-left:auto}}

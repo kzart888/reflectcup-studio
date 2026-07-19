@@ -16,11 +16,11 @@ Large binaries are never stored in JSONB or base64. Session updates carry an exp
 
 ## Profile selection
 
-New sessions bind to the newest published optical profile at creation time. A fresh seed installs immutable `nominal-v1` first and `curved-cup-v2` second, so the curved profile is selected on a fresh database. This is not a mutable global pointer: an existing session continues to resolve its stored profile ID even after another version is published. The original nominal fixture remains byte-for-byte regression evidence.
+New sessions bind to the newest published optical profile at creation time. A fresh seed installs immutable `nominal-v1`, immutable historical `curved-cup-v2`, and current `curved-cup-v3` in that order, so v3 is selected on a fresh database. v3 keeps the v2 geometry checksum but has a new generator checksum and corrected reversible-core LUT. This is not a mutable global pointer: an existing session continues to resolve its stored profile ID even after another version is published. The nominal and v2 fixtures remain byte-for-byte regression evidence.
 
 ## Scene runtime
 
-Scenes use a server-owned published catalog. The currently published IDs are `studio-neutral`, `warm-craftsman-home` and `forest-camp-evening`, each at version 1. The selected customer directions are warm Craftsman interior option 1 and forest camp option 2. New sessions default to `warm-craftsman-home`; changing the database default does not rewrite existing session rows.
+Scenes use a server-owned published catalog. The currently selected releases are `studio-neutral`, `warm-craftsman-home` and `forest-camp-evening`, each at content-bound version 2; their issued v1 identities remain pinned for old snapshots. The selected customer directions are warm Craftsman interior option 1 and forest camp option 2. New sessions default to `warm-craftsman-home`; changing the database default does not rewrite existing session rows.
 
 The browser keeps optical content and scenery separated:
 
@@ -29,9 +29,9 @@ The browser keeps optical content and scenery separated:
 - The scene catalog owns environment orientation, light values, quality resources, download estimates and offline shadow placement.
 - Equirectangular HDR is used both as the visible far background where applicable and as the input to PMREM for the metal cup. A single non-shadowing hero light supplies a stable highlight.
 
-Before switching, the UI fetches the target scene's low-tier assets. The old scene remains visible until that preload succeeds; failure leaves it selected and shows an error. The selector is disabled during the current preload. The successful choice enters the same 650 ms optimistic autosave as crop and camera. Confirmation freezes `sceneId`, `sceneVersion` and `sceneChecksum` into the immutable design snapshot, while canonical plate renders and production-job inputs remain scene-independent.
+Before switching, the UI fetches the target scene's low-tier assets. The old scene remains visible until that preload succeeds; choosing again cancels the obsolete request, while failure leaves the old scene selected and exposes a retry action. The successful choice enters the same 650 ms optimistic autosave as crop and camera. Confirmation freezes `sceneId`, `sceneVersion` and `sceneChecksum` into the immutable design snapshot, while canonical plate renders and production-job inputs remain scene-independent.
 
-The current scene checksum is the SHA-256 of the published scene identity/version contract. It is not yet a content hash over every HDR, texture and mesh. Until a content-addressed asset manifest is added, any asset-visible change must bump the scene version and update both server and customer catalogs; silently replacing a file would defeat snapshot provenance.
+Each published scene is defined once in the client-safe `src/scenes/release-manifest.ts`. Its immutable SHA-256 covers the scene identity/version, every runtime asset URL/byte size/content SHA-256, quality-tier composition, customer-visible lighting/background/shadow parameters, and explicit geometry/renderer/environment/shadow pipeline versions. Server publication and the browser descriptor both consume that shared manifest; neither computes checksums by reading files at runtime. Unit tests independently hash the public files and canonical release payload, and pin every published version/checksum. The former identity-only v1 checksums remain pinned for existing snapshots; the content-bound catalog is v2 and uses immutable `/v2/` or content-hash asset paths. Any asset, visual parameter, procedural geometry, shader or environment-pipeline change therefore requires a new scene version and new checksum rather than silently rewriting a published release.
 
 ### Current and staged asset boundaries
 

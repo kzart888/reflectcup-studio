@@ -10,9 +10,9 @@ Desktop uses a crop/preview split layout. Mobile uses two task-focused views: **
 
 Implemented:
 
-- immutable nominal-v1 regression and curved-cup-v2 digital optical profiles; a fresh seed selects v2 for new sessions;
+- immutable nominal-v1 and curved-cup-v2 regression profiles plus the current curved-cup-v3 digital profile; a fresh seed selects v3 for new sessions;
 - a curved mirror cup with ceramic inner wall/base/handle and a solid ceramic dish display model;
-- vector reflection-area highlighting based on the v2 invertible core region, with the false top island removed;
+- vector reflection-area highlighting based on the v3 reversible core region, with the false top island removed;
 - selected warm Craftsman interior option 1 (the new-session default), forest camp option 2, and a neutral optical studio;
 - identity mapped style, transparent unmapped fill, design sessions, administrator access and a test production bundle;
 - an internal non-AI style comparison lab that is not connected to customer saves or exports.

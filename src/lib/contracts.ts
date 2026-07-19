@@ -52,6 +52,12 @@ export type OpticalRuntime = {
   lut: OpticalRuntimeAssetRef;
   mask: OpticalRuntimeAssetRef;
   targetMask: OpticalRuntimeAssetRef;
+  targetContour?: {
+    url: string;
+    mimeType: "application/json";
+    checksum?: string;
+    encoding: "target-contour-v1";
+  };
 };
 
 export type PreviewRuntimeSettings = {

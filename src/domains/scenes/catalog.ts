@@ -1,12 +1,12 @@
-import { createHash } from "node:crypto";
+import {
+  DEFAULT_SCENE_ID,
+  PUBLISHED_SCENE_IDS,
+  SCENE_RELEASES,
+  type PublishedSceneId,
+} from "@/scenes/release-manifest";
 
-export const PUBLISHED_SCENE_IDS = [
-  "studio-neutral",
-  "warm-craftsman-home",
-  "forest-camp-evening"
-] as const;
-
-export type PublishedSceneId = (typeof PUBLISHED_SCENE_IDS)[number];
+export { DEFAULT_SCENE_ID, PUBLISHED_SCENE_IDS };
+export type { PublishedSceneId };
 
 export type PublishedScene = {
   id: PublishedSceneId;
@@ -15,30 +15,9 @@ export type PublishedScene = {
   checksum: string;
 };
 
-export const DEFAULT_SCENE_ID: PublishedSceneId = "warm-craftsman-home";
-
-const SCENE_CONTRACT_VERSION = 1;
-
-function publishScene(id: PublishedSceneId, version: number): PublishedScene {
-  const checksumInput = JSON.stringify({
-    schemaVersion: SCENE_CONTRACT_VERSION,
-    id,
-    version,
-    status: "published"
-  });
-  return Object.freeze({
-    id,
-    version,
-    status: "published" as const,
-    checksum: createHash("sha256").update(checksumInput).digest("hex")
-  });
-}
-
-export const PUBLISHED_SCENES: readonly PublishedScene[] = Object.freeze([
-  publishScene("studio-neutral", 1),
-  publishScene("warm-craftsman-home", 1),
-  publishScene("forest-camp-evening", 1)
-]);
+export const PUBLISHED_SCENES: readonly PublishedScene[] = Object.freeze(
+  SCENE_RELEASES.map(({ id, version, status, checksum }) => Object.freeze({ id, version, status, checksum })),
+);
 
 const sceneById = new Map(PUBLISHED_SCENES.map((scene) => [scene.id, scene]));
 

@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import { POST as createSessionRoute } from "@/app/api/v1/preview-sessions/route";
 import { GET as getSessionRoute, PATCH as patchSessionRoute } from "@/app/api/v1/preview-sessions/[id]/route";
+import { GET as getSessionAssetRoute } from "@/app/api/v1/preview-sessions/[id]/assets/[assetId]/route";
 import { GET as getOpticalResourceRoute } from "@/app/api/v1/preview-sessions/[id]/optical-profile/[resource]/route";
 import { GET as listAdminSessionsRoute } from "@/app/api/v1/admin/preview-sessions/route";
 import { POST as createAdminProfileRoute } from "@/app/api/v1/admin/optical-profiles/route";
@@ -47,7 +48,7 @@ import { sessionCookieName } from "@/domains/sessions/access-service";
 import { hashClientAddress, hashPassword, normalizeEmail, sha256, stableJson } from "@/domains/auth/security";
 import { ADMIN_COOKIE_NAME, MAX_UPLOAD_BYTES } from "@/lib/constants";
 import { createNominalOpticalProfile, generateOpticalProfile } from "@/optics";
-import { findAsset } from "@/repositories/assets";
+import { findAsset, readAssetPreviewMetadata } from "@/repositories/assets";
 import { ADMIN_LOGIN_LIMITS } from "@/repositories/admin";
 import { getStorage } from "@/storage/filesystem-storage";
 import { enqueueStorageDeletions, processStorageDeletionOutbox } from "@/storage/deletion-outbox";
@@ -332,6 +333,20 @@ describe("backend customer flow", () => {
     const uploaded = await uploadSource(sessionId, new File([sourcePng], "test.png", { type: "image/png" }));
     expect(uploaded.asset.mimeType).toBe("image/webp");
     expect(uploaded.asset.metadata).toMatchObject({ originalName: "test.png" });
+    const uploadedBrowserPreview = readAssetPreviewMetadata(uploaded.asset)!;
+    expect(uploadedBrowserPreview).toMatchObject({ previewWidth: 96, previewHeight: 64 });
+    expect(await getStorage().exists(uploadedBrowserPreview.previewStorageKey)).toBe(true);
+    const browserPreviewResponse = await getSessionAssetRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}/assets/${uploaded.asset.id}?variant=preview`, {
+        headers: { cookie: `${cookieName}=${editorToken}` }
+      }),
+      { params: Promise.resolve({ id: sessionId, assetId: uploaded.asset.id }) }
+    );
+    expect(browserPreviewResponse.status).toBe(200);
+    expect(browserPreviewResponse.headers.get("content-type")).toBe("image/webp");
+    expect(browserPreviewResponse.headers.get("etag")).toBe(`"sha256-${uploadedBrowserPreview.previewSha256}"`);
+    expect(await sharp(Buffer.from(await browserPreviewResponse.arrayBuffer())).metadata())
+      .toMatchObject({ width: 96, height: 64, format: "webp" });
 
     const rendered = await createPreviewRender(sessionId, uploaded.row.revision);
     expect(rendered.job.status).toBe("ready");
@@ -359,15 +374,18 @@ describe("backend customer flow", () => {
     expect(await findAsset(uploaded.asset.id)).toBeUndefined();
     expect(await findAsset(rendered.asset.id)).toBeUndefined();
     expect(await getStorage().exists(uploaded.asset.storageKey)).toBe(false);
+    expect(await getStorage().exists(uploadedBrowserPreview.previewStorageKey)).toBe(false);
     expect(await getStorage().exists(rendered.asset.storageKey)).toBe(false);
     expect(await findAsset(secondRendered.asset.id)).toBeUndefined();
     expect(await getStorage().exists(secondRendered.asset.storageKey)).toBe(false);
 
     for (let index = 1; index < 20; index += 1) {
       const previous = replaced.asset;
+      const previousBrowserPreview = readAssetPreviewMetadata(previous)!;
       replaced = await uploadSource(sessionId, new File([replacementPng], `replacement-${index}.png`, { type: "image/png" }));
       expect(await findAsset(previous.id)).toBeUndefined();
       expect(await getStorage().exists(previous.storageKey)).toBe(false);
+      expect(await getStorage().exists(previousBrowserPreview.previewStorageKey)).toBe(false);
     }
     const remainingSessionAssets = await getDatabase().query.assets.findMany({
       where: eq(assets.ownerSessionId, sessionId)
@@ -635,6 +653,7 @@ describe("backend customer flow", () => {
       create: { width: 32, height: 32, channels: 4, background: { r: 20, g: 40, b: 60, alpha: 0.5 } }
     }).png().toBuffer();
     const uploaded = await uploadSource(sessionId, new File([image], "expire.png", { type: "image/png" }));
+    const uploadedBrowserPreview = readAssetPreviewMetadata(uploaded.asset)!;
     await getDatabase()
       .update(previewSessions)
       .set({ expiresAt: new Date(Date.now() - 1_000) })
@@ -655,6 +674,7 @@ describe("backend customer flow", () => {
       .toMatchObject({ status: "expired", sourceAssetId: null, previewAssetId: null });
     expect(await findAsset(uploaded.asset.id)).toBeUndefined();
     expect(await getStorage().exists(uploaded.asset.storageKey)).toBe(false);
+    expect(await getStorage().exists(uploadedBrowserPreview.previewStorageKey)).toBe(false);
     expect(await getDatabase().query.previewAccessTokens.findMany({
       where: eq(previewAccessTokens.previewSessionId, sessionId)
     })).toHaveLength(0);
@@ -676,6 +696,7 @@ describe("backend customer flow", () => {
       create: { width: 24, height: 24, channels: 3, background: { r: 120, g: 30, b: 70 } }
     }).png().toBuffer();
     const uploaded = await uploadSource(sessionId, new File([image], "retry.png", { type: "image/png" }));
+    const uploadedBrowserPreview = readAssetPreviewMetadata(uploaded.asset)!;
     await getDatabase()
       .update(previewSessions)
       .set({ expiresAt: new Date(Date.now() - 1_000) })
@@ -683,13 +704,13 @@ describe("backend customer flow", () => {
 
     const expired = await expireStaleSessions(new Date(), 10, {
       async delete(key: string) {
-        expect(key).toBe(uploaded.asset.storageKey);
+        expect([uploaded.asset.storageKey, uploadedBrowserPreview.previewStorageKey]).toContain(key);
         throw new Error("injected retention storage outage");
       }
     });
     expect(expired.find((result) => result.sessionId === sessionId)).toMatchObject({
       removedAssets: 1,
-      storageFailures: 1
+      storageFailures: 2
     });
     expect(await findAsset(uploaded.asset.id)).toBeUndefined();
     expect(await getStorage().exists(uploaded.asset.storageKey)).toBe(true);
@@ -700,12 +721,16 @@ describe("backend customer flow", () => {
 
     const retried = await processStorageDeletionOutbox({
       now: pending!.nextAttemptAt,
-      limit: 1,
+      limit: 2,
       storage: getStorage()
     });
-    expect(retried).toEqual({ claimed: 1, completed: 1, failed: 0 });
+    expect(retried).toEqual({ claimed: 2, completed: 2, failed: 0 });
     expect(await getStorage().exists(uploaded.asset.storageKey)).toBe(false);
-    await getDatabase().delete(storageDeletionOutbox).where(eq(storageDeletionOutbox.id, pending!.id));
+    expect(await getStorage().exists(uploadedBrowserPreview.previewStorageKey)).toBe(false);
+    await getDatabase().delete(storageDeletionOutbox).where(inArray(
+      storageDeletionOutbox.storageKey,
+      [uploaded.asset.storageKey, uploadedBrowserPreview.previewStorageKey]
+    ));
   });
 });
 

@@ -5,6 +5,12 @@ import type { PlateTargetLut } from "../../src/optics";
 import { samplePlateTargetLut } from "../../src/optics";
 import { opticalSampling } from "../../src/rendering/shaders";
 
+const PUBLISHED_LUT_FIXTURES = [
+  { label: "nominal", publicDirectory: "nominal-v1" },
+  { label: "curved-cup-v2", publicDirectory: "curved-cup-v2" },
+  { label: "curved-cup-v3", publicDirectory: "curved-cup-v3" },
+] as const;
+
 test("WebGL2 uses the same mask-weighted LUT interpolation as the CPU", async ({ page }, testInfo) => {
   test.skip(testInfo.project.name.includes("mobile"), "one WebGL2 execution is sufficient");
   await page.goto("/");
@@ -103,14 +109,15 @@ test("WebGL2 uses the same mask-weighted LUT interpolation as the CPU", async ({
   }
 });
 
-test("the published nominal LUT keeps the CPU and GPU hit masks aligned", async ({ page }, testInfo) => {
+for (const fixture of PUBLISHED_LUT_FIXTURES) test(`the published ${fixture.label} LUT keeps the CPU and GPU hit masks aligned`, async ({ page }, testInfo) => {
   test.skip(testInfo.project.name.includes("mobile"), "one WebGL2 execution is sufficient");
   await page.goto("/");
 
   const width = 512;
   const height = 512;
-  const targetBytes = Uint8Array.from(readFileSync("public/optical-profiles/nominal-v1/plate-to-target.rg32f"));
-  const validMask = Uint8Array.from(readFileSync("public/optical-profiles/nominal-v1/plate-valid-mask.bin"));
+  const publicRoot = `public/optical-profiles/${fixture.publicDirectory}`;
+  const targetBytes = Uint8Array.from(readFileSync(`${publicRoot}/plate-to-target.rg32f`));
+  const validMask = Uint8Array.from(readFileSync(`${publicRoot}/plate-valid-mask.bin`));
   const lut: PlateTargetLut = {
     width,
     height,
@@ -120,18 +127,18 @@ test("the published nominal LUT keeps the CPU and GPU hit masks aligned", async 
   const outputWidth = 257;
   const outputHeight = 257;
 
-  const gpuMask = await page.evaluate(async ({ outputWidth, outputHeight, opticalSampling }) => {
+  const gpuMask = await page.evaluate(async ({ outputWidth, outputHeight, opticalSampling, publicDirectory }) => {
     const [targetResponse, maskResponse] = await Promise.all([
-      fetch("/optical-profiles/nominal-v1/plate-to-target.rg32f"),
-      fetch("/optical-profiles/nominal-v1/plate-valid-mask.bin"),
+      fetch(`/optical-profiles/${publicDirectory}/plate-to-target.rg32f`),
+      fetch(`/optical-profiles/${publicDirectory}/plate-valid-mask.bin`),
     ]);
-    if (!targetResponse.ok || !maskResponse.ok) throw new Error("Published nominal optical assets could not be loaded");
+    if (!targetResponse.ok || !maskResponse.ok) throw new Error(`Published ${publicDirectory} optical assets could not be loaded`);
     const targetUv = new Float32Array(await targetResponse.arrayBuffer());
     const validMask = new Uint8Array(await maskResponse.arrayBuffer());
     const width = 512;
     const height = 512;
     if (targetUv.length !== width * height * 2 || validMask.length !== width * height) {
-      throw new Error("Published nominal optical assets have unexpected dimensions");
+      throw new Error(`Published ${publicDirectory} optical assets have unexpected dimensions`);
     }
 
     const canvas = document.createElement("canvas");
@@ -197,7 +204,7 @@ test("the published nominal LUT keeps the CPU and GPU hit masks aligned", async 
     const result = new Uint8Array(outputWidth * outputHeight);
     for (let pixel = 0; pixel < result.length; pixel += 1) result[pixel] = pixels[pixel * 4] > 127 ? 1 : 0;
     return Array.from(result);
-  }, { outputWidth, outputHeight, opticalSampling });
+  }, { outputWidth, outputHeight, opticalSampling, publicDirectory: fixture.publicDirectory });
 
   const cpuMask = new Uint8Array(outputWidth * outputHeight);
   for (let y = 0; y < outputHeight; y += 1) {
@@ -233,7 +240,10 @@ test("the published nominal LUT keeps the CPU and GPU hit masks aligned", async 
     }
   }
   const maskIou = intersection / union;
-  testInfo.annotations.push({ type: "acceptance", description: `nominal LUT CPU/GPU core-mask IoU=${maskIou.toFixed(6)}` });
+  testInfo.annotations.push({
+    type: "acceptance",
+    description: `${fixture.publicDirectory} LUT CPU/GPU core-mask IoU=${maskIou.toFixed(6)}`,
+  });
   expect(compared).toBeGreaterThan(outputWidth * outputHeight * 0.7);
   expect(union).toBeGreaterThan(outputWidth * outputHeight * 0.05);
   expect(maskIou).toBeGreaterThanOrEqual(0.995);
