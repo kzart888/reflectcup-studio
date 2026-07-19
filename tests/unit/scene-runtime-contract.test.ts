@@ -61,32 +61,56 @@ describe("scene runtime quality contract", () => {
     expect(backdrop).toContain("material.aoMapIntensity = 0.82");
   });
 
-  it("ships the v4 context shells without exposing the near-wall home panorama", () => {
+  it("ships the v5 lounge environment and the v5 grounded forest composition", () => {
     const backdrop = readFileSync("src/scenes/SceneBackdrop.tsx", "utf8");
     const home = SCENE_RELEASES.find((release) => release.id === "warm-craftsman-home")!;
     const forest = SCENE_RELEASES.find((release) => release.id === "forest-camp-evening")!;
 
     expect(home).toMatchObject({
-      version: 4,
-      visual: { background: { mode: "solid" } },
-      renderContract: { geometryVersion: "cc0-game-ready-layout-v4" },
+      version: 5,
+      visual: { background: { mode: "grounded-environment" } },
+      renderContract: {
+        geometryVersion: "cc0-table-plus-lythwood-lounge-v5",
+        rendererVersion: "reflective-subject-grounded-scene-v5",
+      },
     });
-    expect(home.qualityAssets.low.textureKeys).toEqual([
-      "room-floor-color",
-      "room-floor-normal",
-      "room-floor-roughness",
-    ]);
+    expect(home.qualityAssets.low.textureKeys).toEqual([]);
+    expect(home.qualityAssets.low.backgroundKey).toBe("background-low");
+    expect(home.qualityAssets.medium.backgroundKey).toBe("background-1k");
+    expect(home.qualityAssets.high.backgroundKey).toBe("background-4k");
+    expect(home.qualityAssets.low.modelKeys).toEqual({ table: "model-table-low" });
+    expect(home.qualityAssets.medium.modelKeys).toEqual({ table: "model-table" });
+    expect(home.qualityAssets.high.modelKeys).toEqual({ table: "model-table" });
     expect(forest).toMatchObject({
-      version: 4,
-      visual: { background: { mode: "environment", blur: 0 } },
-      renderContract: { geometryVersion: "cc0-game-ready-context-v4" },
+      version: 5,
+      visual: {
+        background: {
+          mode: "grounded-environment",
+          blur: 0,
+          groundProjection: { captureHeight: 1.55, radius: 7.1 },
+        },
+      },
+      renderContract: { geometryVersion: "polyhaven-pine-forest-props-v5" },
     });
     expect(forest.qualityAssets.low.textureKeys).toEqual([]);
     expect(forest.qualityAssets.medium.textureKeys).toEqual([]);
+    expect(forest.qualityAssets.low.backgroundKey).toBe("background-low");
+    expect(forest.qualityAssets.medium.backgroundKey).toBe("background-1k");
+    expect(forest.qualityAssets.high.backgroundKey).toBe("background-4k");
+    expect(forest.qualityAssets.low.modelKeys?.forestContext).toBe("model-forest-context-low");
+    expect(forest.qualityAssets.medium.modelKeys?.forestContext).toBe("model-forest-context-medium");
+    expect(forest.qualityAssets.high.modelKeys?.forestContext).toBe("model-forest-context-high");
+    expect(forest.qualityAssets.low.modelKeys).not.toHaveProperty("tent");
+    expect(forest.qualityAssets.medium.modelKeys).not.toHaveProperty("tent");
+    expect(forest.qualityAssets.high.modelKeys).not.toHaveProperty("tent");
     expect(backdrop).toContain('name="large-craftsman-room-shell"');
+    expect(backdrop).toContain("descriptor.version === 4 ? <HomeRoomShell");
+    expect(backdrop).toContain("descriptor.version < 5 ? <Suspense");
     expect(backdrop).toContain('name="wide-forest-context"');
     expect(backdrop).toContain('name="room-oak-floor"');
     expect(backdrop).toContain('name="forest-earth-ground"');
+    expect(backdrop).toContain('name="cc0-polyhaven-pine-forest-context"');
+    expect(backdrop).toContain("descriptor.version < 5 ? <Suspense");
     expect(backdrop).not.toContain('name="forest-midground-trunk"');
     expect(backdrop).not.toContain('name="forest-moss-patch"');
   });
@@ -103,6 +127,24 @@ describe("scene runtime quality contract", () => {
 
     expect(preview).toContain("const resourceKey = `${descriptor.id}:${descriptor.version}:${quality}:${contextGeneration}`");
     expect(preview).toContain("targetState?.key === resourceKey ? targetState.target.texture : undefined");
+  });
+
+  it("keys loader retention by the immutable scene release identity", () => {
+    const preview = readFileSync("src/rendering/ReflectiveCupPreview.tsx", "utf8");
+
+    expect(preview).toContain("`${descriptor.id}:v${descriptor.version}:${descriptor.checksum}`");
+    expect(preview).toContain("retainedSceneDescriptors.get(evictedKey)");
+    expect(preview).not.toContain("CUSTOMER_SCENES.find((scene) => scene.id === evictedId)");
+  });
+
+  it("uses the official ground-projected skybox while keeping HDR PMREM separate", () => {
+    const preview = readFileSync("src/rendering/ReflectiveCupPreview.tsx", "utf8");
+
+    expect(preview).toContain('from "three/examples/jsm/objects/GroundedSkybox.js"');
+    expect(preview).toContain("groundedSkyboxResolution(quality, projection.resolution)");
+    expect(preview).toContain("result.material.toneMapped = false");
+    expect(preview).toContain('descriptor.background.mode === "grounded-environment"');
+    expect(preview).toContain("scene.environment = pmrem");
   });
 
   it("serves only immutable versioned and content-addressed scene paths with long-lived caching", () => {

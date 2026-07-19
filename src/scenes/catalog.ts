@@ -2,14 +2,21 @@ import type { SceneQuality } from "@/lib/contracts";
 import {
   DEFAULT_SCENE_ID,
   findSceneRelease,
+  LEGACY_SCENE_V1_IDENTITIES,
+  LEGACY_SCENE_V2_RELEASES,
+  LEGACY_SCENE_V3_RELEASES,
+  LEGACY_SCENE_V4_RELEASES,
+  SCENE_RELEASES,
   type PublishedSceneId,
   type SceneAssetFile,
+  type SceneRenderContract,
   type SceneRelease,
   type SceneVisualContract,
 } from "@/scenes/release-manifest";
 
 export type SceneAssetSet = {
   environment: string;
+  background?: string;
   textures: readonly string[];
   models: Readonly<Record<string, string>>;
   approximateBytes: number;
@@ -26,9 +33,31 @@ export type SceneDescriptor = {
   background: SceneVisualContract["background"];
   lighting: SceneVisualContract["lighting"];
   subject: SceneVisualContract["subject"];
+  renderContract: SceneRenderContract;
   tableShadow: Omit<SceneVisualContract["tableShadow"], "assetKey"> & { url: string };
   groundOcclusion?: Omit<NonNullable<SceneVisualContract["groundOcclusion"]>, "assetKey"> & { url: string };
 };
+
+export type SceneReference = {
+  sceneId: string;
+  sceneVersion: number;
+  sceneChecksum: string;
+};
+
+export type SceneReplayErrorCode =
+  | "SCENE_RELEASE_NOT_REPLAYABLE"
+  | "SCENE_RELEASE_CHECKSUM_MISMATCH"
+  | "SCENE_RELEASE_NOT_FOUND"
+  | "SCENE_REFERENCE_INVALID";
+
+export class SceneReplayError extends Error {
+  constructor(public readonly code: SceneReplayErrorCode, message: string) {
+    super(message);
+    this.name = "SceneReplayError";
+  }
+}
+
+const SCENE_REFERENCE_KEY_PREFIX = "scene-release:";
 
 const LABELS: Record<PublishedSceneId, { customerLabel: string; shortLabel: string }> = {
   "studio-neutral": { customerLabel: "Neutral optical studio", shortLabel: "Neutral studio" },
@@ -45,6 +74,7 @@ function getAsset(release: SceneRelease, key: string): SceneAssetFile {
 function createQualityAssets(release: SceneRelease, quality: SceneQuality): SceneAssetSet {
   const tier = release.qualityAssets[quality];
   const environment = getAsset(release, tier.environmentKey);
+  const background = tier.backgroundKey ? getAsset(release, tier.backgroundKey) : undefined;
   const textures = tier.textureKeys.map((key) => getAsset(release, key));
   const models = Object.fromEntries(
     Object.entries(tier.modelKeys ?? {}).map(([role, key]) => [role, getAsset(release, key)]),
@@ -56,11 +86,12 @@ function createQualityAssets(release: SceneRelease, quality: SceneQuality): Scen
     : undefined;
   return {
     environment: environment.url,
+    background: background?.url,
     textures: textures.map((asset) => asset.url),
     models: Object.freeze(Object.fromEntries(
       Object.entries(models).map(([role, asset]) => [role, asset.url]),
     )),
-    approximateBytes: [environment, ...textures, ...Object.values(models), tableShadow, contactAo, groundOcclusion]
+    approximateBytes: [environment, background, ...textures, ...Object.values(models), tableShadow, contactAo, groundOcclusion]
       .filter((asset): asset is SceneAssetFile => Boolean(asset))
       .reduce((total, asset) => total + asset.bytes, 0),
   };
@@ -87,6 +118,7 @@ function createDescriptor(release: SceneRelease): SceneDescriptor {
     background: release.visual.background,
     lighting: release.visual.lighting,
     subject: release.visual.subject,
+    renderContract: release.renderContract,
     tableShadow: {
       opacity: tableShadow.opacity,
       size: tableShadow.size,
@@ -118,19 +150,98 @@ export const CUSTOMER_SCENES: readonly SceneDescriptor[] = Object.freeze(
 
 const sceneById = new Map(CUSTOMER_SCENES.map((scene) => [scene.id, scene]));
 
-export function getSceneDescriptor(id: string): SceneDescriptor {
-  return sceneById.get(id as PublishedSceneId) ?? sceneById.get("studio-neutral")!;
+const replayableReleaseByIdentity = new Map<string, SceneRelease>();
+for (const release of [
+  LEGACY_SCENE_V2_RELEASES[0],
+  ...LEGACY_SCENE_V3_RELEASES,
+  ...LEGACY_SCENE_V4_RELEASES,
+  ...SCENE_RELEASES,
+] as readonly SceneRelease[]) {
+  const identity = `${release.id}:v${release.version}`;
+  const existing = replayableReleaseByIdentity.get(identity);
+  if (existing && existing.checksum !== release.checksum) {
+    throw new Error(`Scene release identity is not immutable: ${identity}`);
+  }
+  replayableReleaseByIdentity.set(identity, release);
+}
+
+const replayableSceneByIdentity = new Map(
+  [...replayableReleaseByIdentity].map(([identity, release]) => [identity, createDescriptor(release)]),
+);
+
+const knownNonReplayableByIdentity = new Map([
+  ...LEGACY_SCENE_V1_IDENTITIES,
+  ...LEGACY_SCENE_V2_RELEASES.slice(1),
+].map((release) => [`${release.id}:v${release.version}`, release]));
+
+function getReplayDescriptor(reference: SceneReference): SceneDescriptor {
+  const identity = `${reference.sceneId}:v${reference.sceneVersion}`;
+  const descriptor = replayableSceneByIdentity.get(identity);
+  if (descriptor) {
+    if (descriptor.checksum !== reference.sceneChecksum) {
+      throw new SceneReplayError(
+        "SCENE_RELEASE_CHECKSUM_MISMATCH",
+        `Saved scene checksum does not match ${identity}`,
+      );
+    }
+    return descriptor;
+  }
+
+  const knownNonReplayable = knownNonReplayableByIdentity.get(identity);
+  if (knownNonReplayable) {
+    if (knownNonReplayable.checksum !== reference.sceneChecksum) {
+      throw new SceneReplayError(
+        "SCENE_RELEASE_CHECKSUM_MISMATCH",
+        `Saved scene checksum does not match ${identity}`,
+      );
+    }
+    throw new SceneReplayError(
+      "SCENE_RELEASE_NOT_REPLAYABLE",
+      `Scene ${identity} does not have a complete compatible replay implementation`,
+    );
+  }
+
+  throw new SceneReplayError(
+    "SCENE_RELEASE_NOT_FOUND",
+    `Saved scene release is not available: ${identity}`,
+  );
+}
+
+function parseSceneReferenceKey(value: string): SceneReference | undefined {
+  if (!value.startsWith(SCENE_REFERENCE_KEY_PREFIX)) return undefined;
+  const match = /^scene-release:([^:]+):v([1-9]\d*):([a-f0-9]{64})$/.exec(value);
+  if (!match) {
+    throw new SceneReplayError("SCENE_REFERENCE_INVALID", "Saved scene reference is malformed");
+  }
+  return {
+    sceneId: match[1],
+    sceneVersion: Number(match[2]),
+    sceneChecksum: match[3],
+  };
+}
+
+export function getSceneDescriptor(reference: string | SceneReference): SceneDescriptor {
+  if (typeof reference !== "string") return getReplayDescriptor(reference);
+  const replayReference = parseSceneReferenceKey(reference);
+  if (replayReference) return getReplayDescriptor(replayReference);
+  return sceneById.get(reference as PublishedSceneId) ?? sceneById.get("studio-neutral")!;
+}
+
+export function sceneReferenceKey(reference: SceneReference): string {
+  const descriptor = getReplayDescriptor(reference);
+  return `${SCENE_REFERENCE_KEY_PREFIX}${descriptor.id}:v${descriptor.version}:${descriptor.checksum}`;
 }
 
 export async function preloadSceneAssets(
-  id: string,
+  reference: string | SceneReference,
   signal?: AbortSignal,
   quality: SceneQuality = "low",
 ): Promise<void> {
-  const descriptor = getSceneDescriptor(id);
+  const descriptor = getSceneDescriptor(reference);
   const assets = descriptor.qualityAssets[quality];
   const urls = [
     assets.environment,
+    assets.background,
     ...assets.textures,
     ...Object.values(assets.models),
     descriptor.tableShadow.url,

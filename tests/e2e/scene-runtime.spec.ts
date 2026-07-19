@@ -2,10 +2,13 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 
 import type { PreviewSession } from "../../src/lib/contracts";
 import { createNominalOpticalProfile } from "../../src/optics";
+import { findSceneRelease, LEGACY_SCENE_V4_RELEASES } from "../../src/scenes/release-manifest";
 
 function sceneSession(sceneId = "warm-craftsman-home"): PreviewSession {
   const now = new Date().toISOString();
   const profile = createNominalOpticalProfile({ status: "published" });
+  const scene = findSceneRelease(sceneId);
+  if (!scene) throw new Error(`Missing test scene: ${sceneId}`);
   return {
     id: "scene_runtime_session",
     status: "draft",
@@ -50,6 +53,8 @@ function sceneSession(sceneId = "warm-craftsman-home"): PreviewSession {
       keyLightMultiplier: 1,
     },
     sceneId,
+    sceneVersion: scene.version,
+    sceneChecksum: scene.checksum,
     crop: { centerX: 0.5, centerY: 0.5, scale: 1 },
     camera: { position: [0.6, 0.48, 0], target: [-0.03, 0.043, 0] },
     styleStrategy: "identity",
@@ -59,8 +64,12 @@ function sceneSession(sceneId = "warm-craftsman-home"): PreviewSession {
   };
 }
 
-async function mockSceneSession(page: Page, initialSceneId = "warm-craftsman-home") {
-  let session = sceneSession(initialSceneId);
+async function mockSceneSession(
+  page: Page,
+  initialSceneId = "warm-craftsman-home",
+  initialSession?: PreviewSession,
+) {
+  let session = initialSession ?? sceneSession(initialSceneId);
   const patches: Array<Record<string, unknown>> = [];
   await page.route("**/api/v1/preview-sessions**", async (route: Route) => {
     const request = route.request();
@@ -75,7 +84,13 @@ async function mockSceneSession(page: Page, initialSceneId = "warm-craftsman-hom
     if (request.method() === "PATCH") {
       const patch = request.postDataJSON() as Record<string, unknown>;
       patches.push(patch);
-      session = { ...session, ...patch, revision: session.revision + 1 } as PreviewSession;
+      const nextScene = typeof patch.sceneId === "string" ? findSceneRelease(patch.sceneId) : undefined;
+      session = {
+        ...session,
+        ...patch,
+        ...(nextScene ? { sceneVersion: nextScene.version, sceneChecksum: nextScene.checksum } : {}),
+        revision: session.revision + 1,
+      } as PreviewSession;
     }
     return route.fulfill({
       status: 200,
@@ -85,6 +100,52 @@ async function mockSceneSession(page: Page, initialSceneId = "warm-craftsman-hom
   });
   return { patches };
 }
+
+test("a confirmed forest v4 session replays v4 instead of current v5", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name.includes("mobile"), "one desktop immutable-release replay check is sufficient");
+  const forestV4 = LEGACY_SCENE_V4_RELEASES[1];
+  const confirmedV4: PreviewSession = {
+    ...sceneSession(forestV4.id),
+    status: "confirmed",
+    sceneVersion: forestV4.version,
+    sceneChecksum: forestV4.checksum,
+  };
+  await mockSceneSession(page, forestV4.id, confirmedV4);
+  const requestedAssets: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/scenes/forest-camp-evening/")) requestedAssets.push(request.url());
+  });
+
+  await page.goto("/studio/new");
+  await expect(page.getByLabel("Scene")).toHaveValue(forestV4.id);
+  await expect(page.getByText(/locked as a test snapshot/i)).toBeVisible();
+  await expect.poll(
+    () => requestedAssets.some((url) => url.endsWith("/v3/models/kenney-tent.glb")),
+    { timeout: 20_000 },
+  ).toBe(true);
+  expect(requestedAssets.some((url) => url.includes("/v5/"))).toBe(false);
+});
+
+test("a saved scene checksum mismatch is refused instead of falling forward", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name.includes("mobile"), "one desktop immutable-release rejection check is sufficient");
+  const forestV4 = LEGACY_SCENE_V4_RELEASES[1];
+  const mismatched: PreviewSession = {
+    ...sceneSession(forestV4.id),
+    status: "confirmed",
+    sceneVersion: forestV4.version,
+    sceneChecksum: "0".repeat(64),
+  };
+  await mockSceneSession(page, forestV4.id, mismatched);
+  const requestedAssets: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/scenes/forest-camp-evening/")) requestedAssets.push(request.url());
+  });
+
+  await page.goto("/studio/new");
+  await expect(page.getByText("This saved scene release cannot be replayed safely.")).toBeVisible();
+  await expect(page.getByTestId("reflection-preview")).toHaveCount(0);
+  expect(requestedAssets).toHaveLength(0);
+});
 
 async function disableIdlePromotion(page: Page) {
   await page.addInitScript(() => {
@@ -103,17 +164,23 @@ test("scene switching waits for the device-appropriate preview tier", async ({ p
   await disableIdlePromotion(page);
   const state = await mockSceneSession(page);
   const mediumOnly = new Set<string>();
-  // Low keeps the same model geometry but uses smaller embedded PBR images.
-  // A constrained device must not fetch the 1K Medium model derivatives.
-  const mediumOnlyNames = ["outdoor-table-chair-set-01.glb", "lantern-01.glb"];
+  let v5TentRequests = 0;
+  // Low keeps the same composition but uses smaller embedded PBR images.
+  // A constrained device must not fetch the Medium model derivatives.
+  const mediumOnlyNames = [
+    "outdoor-table-chair-set-01.glb",
+    "lantern-01.glb",
+    "pine-forest-props-medium-3fa78f9e225c8e8f.glb",
+  ];
   page.on("request", (request) => {
     if (mediumOnlyNames.some((name) => request.url().endsWith(name))) mediumOnly.add(request.url());
+    if (request.url().endsWith("/scenes/forest-camp-evening/v3/models/kenney-tent.glb")) v5TentRequests += 1;
   });
 
   let delayedRequestStarted = false;
   let releaseDelayedRequest: (() => void) | undefined;
   const delayedRequestReleased = new Promise<void>((resolve) => { releaseDelayedRequest = resolve; });
-  await page.route("**/scenes/forest-camp-evening/v3/environment-1k.hdr", async (route) => {
+  await page.route("**/scenes/forest-camp-evening/v5/environment-1k.hdr", async (route) => {
     delayedRequestStarted = true;
     await delayedRequestReleased;
     await route.continue();
@@ -146,6 +213,7 @@ test("scene switching waits for the device-appropriate preview tier", async ({ p
       timeout: 20_000,
     }).toBe(true);
     await expect(select).toHaveValue("forest-camp-evening");
+    expect(v5TentRequests).toBe(0);
     if (mobile) expect(mediumOnly.size).toBe(0);
   } finally {
     releaseDelayedRequest?.();
@@ -179,7 +247,7 @@ test("desktop never requests the 2K environment before its idle promotion gate",
   await mockSceneSession(page);
   let highEnvironmentRequests = 0;
   page.on("request", (request) => {
-    if (request.url().endsWith("/scenes/warm-craftsman-home/v3/environment-2k.hdr")) {
+    if (request.url().endsWith("/scenes/warm-craftsman-home/v5/lythwood-lounge-2k-04cce69276d91353.hdr")) {
       highEnvironmentRequests += 1;
     }
   });

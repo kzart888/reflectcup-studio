@@ -84,6 +84,8 @@ export type PreviewSession = {
   opticalRuntime: OpticalRuntime;
   previewSettings: PreviewRuntimeSettings;
   sceneId: string;
+  sceneVersion: number;
+  sceneChecksum: string;
   crop: CropTransform;
   camera: CameraState;
   source?: AssetRef;

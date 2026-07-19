@@ -11,20 +11,30 @@ import {
   PUBLISHED_SCENES
 } from "@/domains/scenes/catalog";
 import { sessionPatchSchema } from "@/domains/sessions/validation";
-import { CUSTOMER_SCENES, getSceneDescriptor } from "@/scenes/catalog";
+import { CUSTOMER_SCENES, getSceneDescriptor, sceneReferenceKey, SceneReplayError } from "@/scenes/catalog";
 import {
   LEGACY_SCENE_V1_IDENTITIES,
   LEGACY_SCENE_V2_RELEASES,
   LEGACY_SCENE_V3_RELEASES,
+  LEGACY_SCENE_V4_RELEASES,
   SCENE_RELEASES,
   serializeSceneReleaseForChecksum,
 } from "@/scenes/release-manifest";
 
 const EXPECTED_RELEASES = {
   "studio-neutral": "b2284d246bab7eecab47690467374eca132330bf95f7aee7d5c01ec927df5616",
-  "warm-craftsman-home": "ee834113e1febd642ae02d0f135f3652d9e962ed437d40ef189d4af16a59079e",
-  "forest-camp-evening": "457ae5440ee49a4bdcf597c656b92c26f7350f67e85e739fb86621fb2a40ecb5",
+  "warm-craftsman-home": "a69ed575767d84ee8105f8300bd4a3febb80931ad40bccb88147a70c04abeee1",
+  "forest-camp-evening": "2d9e08cfa0c92ea284e95c3b8f39ddb0979d63b03248dce69d1a3cbe33b291f6",
 } as const;
+
+function captureError(run: () => unknown): unknown {
+  try {
+    run();
+  } catch (error) {
+    return error;
+  }
+  throw new Error("Expected operation to throw");
+}
 
 describe("published scene catalog", () => {
   it("publishes the three versioned scene IDs with stable checksums", () => {
@@ -35,7 +45,7 @@ describe("published scene catalog", () => {
     ]);
     expect(DEFAULT_SCENE_ID).toBe("warm-craftsman-home");
     expect(PUBLISHED_SCENES).toHaveLength(3);
-    const expectedVersions = { "studio-neutral": 2, "warm-craftsman-home": 4, "forest-camp-evening": 4 } as const;
+    const expectedVersions = { "studio-neutral": 2, "warm-craftsman-home": 5, "forest-camp-evening": 5 } as const;
     for (const scene of PUBLISHED_SCENES) {
       expect(scene).toMatchObject({ version: expectedVersions[scene.id], status: "published" });
       expect(scene.checksum).toMatch(/^[0-9a-f]{64}$/);
@@ -67,6 +77,10 @@ describe("published scene catalog", () => {
     expect(LEGACY_SCENE_V3_RELEASES.map(({ id, version, checksum }) => ({ id, version, checksum }))).toEqual([
       { id: "warm-craftsman-home", version: 3, checksum: "ab9717f5abfa2796ac33d9abcc3b101b6dc9ecd1adddbfa41afada346b687b5e" },
       { id: "forest-camp-evening", version: 3, checksum: "452639f3e3cf9d5723d9399799d783710a314ffa635cd07b5b9fbbc6ee10189c" },
+    ]);
+    expect(LEGACY_SCENE_V4_RELEASES.map(({ id, version, checksum }) => ({ id, version, checksum }))).toEqual([
+      { id: "warm-craftsman-home", version: 4, checksum: "ee834113e1febd642ae02d0f135f3652d9e962ed437d40ef189d4af16a59079e" },
+      { id: "forest-camp-evening", version: 4, checksum: "457ae5440ee49a4bdcf597c656b92c26f7350f67e85e739fb86621fb2a40ecb5" },
     ]);
   });
 
@@ -138,6 +152,43 @@ describe("published scene catalog", () => {
     expect(getSceneDescriptor("unpublished-scene").id).toBe("studio-neutral");
   });
 
+  it("replays an exact forest v4 reference without falling forward to v5", () => {
+    const forestV4 = LEGACY_SCENE_V4_RELEASES[1];
+    const reference = {
+      sceneId: forestV4.id,
+      sceneVersion: forestV4.version,
+      sceneChecksum: forestV4.checksum,
+    };
+    const descriptor = getSceneDescriptor(sceneReferenceKey(reference));
+
+    expect(descriptor).toMatchObject({
+      id: "forest-camp-evening",
+      version: 4,
+      checksum: forestV4.checksum,
+    });
+    expect(descriptor.qualityAssets.low.models).toHaveProperty("tent");
+    expect(getSceneDescriptor("forest-camp-evening").version).toBe(5);
+
+    const checksumError = captureError(() => getSceneDescriptor({
+      ...reference,
+      sceneChecksum: "0".repeat(64),
+    }));
+    expect(checksumError).toBeInstanceOf(SceneReplayError);
+    expect(checksumError).toMatchObject({ code: "SCENE_RELEASE_CHECKSUM_MISMATCH" });
+    const forestV1Error = captureError(() => getSceneDescriptor({
+      sceneId: LEGACY_SCENE_V1_IDENTITIES[2].id,
+      sceneVersion: LEGACY_SCENE_V1_IDENTITIES[2].version,
+      sceneChecksum: LEGACY_SCENE_V1_IDENTITIES[2].checksum,
+    }));
+    expect(forestV1Error).toMatchObject({ code: "SCENE_RELEASE_NOT_REPLAYABLE" });
+    const forestV2Error = captureError(() => getSceneDescriptor({
+      sceneId: LEGACY_SCENE_V2_RELEASES[2].id,
+      sceneVersion: LEGACY_SCENE_V2_RELEASES[2].version,
+      sceneChecksum: LEGACY_SCENE_V2_RELEASES[2].checksum,
+    }));
+    expect(forestV2Error).toMatchObject({ code: "SCENE_RELEASE_NOT_REPLAYABLE" });
+  });
+
   it("ships every declared asset inside its download budget", () => {
     const byteBudgets = { low: 4_000_000, medium: 7_000_000, high: 12_000_000 } as const;
     for (const scene of CUSTOMER_SCENES) {
@@ -145,11 +196,13 @@ describe("published scene catalog", () => {
         const assets = scene.qualityAssets[quality];
         const urls = [
           assets.environment,
+          assets.background,
           ...assets.textures,
           ...Object.values(assets.models),
           scene.tableShadow.url,
           scene.assetUrls["cup-contact-ao"],
-        ];
+          scene.groundOcclusion?.url,
+        ].filter((url): url is string => Boolean(url));
         expect(new Set(urls).size).toBe(urls.length);
         const actualBytes = urls.reduce((total, url) => {
           expect(url).toMatch(/^\/(?:scenes|profiles)\//);
@@ -160,5 +213,22 @@ describe("published scene catalog", () => {
         expect(assets.approximateBytes).toBe(actualBytes);
       }
     }
+    const forest = getSceneDescriptor("forest-camp-evening");
+    const home = getSceneDescriptor("warm-craftsman-home");
+    expect([
+      home.qualityAssets.low.approximateBytes,
+      home.qualityAssets.medium.approximateBytes,
+      home.qualityAssets.high.approximateBytes,
+    ]).toEqual([1_801_923, 2_198_273, 7_393_962]);
+    expect(Object.values(home.qualityAssets).every((quality) => !(
+      "sofa" in quality.models || "plant" in quality.models
+    ))).toBe(true);
+    expect([
+      forest.qualityAssets.low.approximateBytes,
+      forest.qualityAssets.medium.approximateBytes,
+      forest.qualityAssets.high.approximateBytes,
+    ]).toEqual([3_882_089, 6_641_334, 11_931_937]);
+    expect(Object.values(forest.qualityAssets).every((quality) => !("tent" in quality.models))).toBe(true);
+    expect(LEGACY_SCENE_V4_RELEASES[1].qualityAssets.low.modelKeys?.tent).toBe("model-tent");
   });
 });

@@ -29,6 +29,7 @@ export const customerCopy = {
   sceneLabel: "Scene",
   sceneLoading: "Loading scene…",
   sceneLoadFailed: "The scene could not be loaded. Your previous scene is still active.",
+  sceneReplayUnavailable: "This saved scene release cannot be replayed safely.",
   retryScene: "Retry scene",
   confirm: "Confirm design",
   confirming: "Confirming…",

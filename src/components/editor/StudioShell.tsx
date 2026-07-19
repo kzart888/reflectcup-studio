@@ -744,6 +744,8 @@ export function StudioShell({ requestedSessionId }: { requestedSessionId: string
             previewState={previewState}
             canonicalState={currentCanonicalState}
             sceneId={sceneId}
+            sceneVersion={sceneId === session.sceneId ? session.sceneVersion : undefined}
+            sceneChecksum={sceneId === session.sceneId ? session.sceneChecksum : undefined}
             sceneDisabled={locked || scenePending}
             onBestView={() => setResetNonce((value) => value + 1)}
             onSceneChange={handleSceneChange}

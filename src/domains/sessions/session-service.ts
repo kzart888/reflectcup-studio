@@ -11,13 +11,14 @@ import {
   previewSessions,
   storageDeletionOutbox
 } from "@/db/schema";
-import type { AssetRef, CameraState, CropTransform, PreviewSession } from "@/lib/contracts";
+import type { AssetRef, CameraState, CropTransform, PreviewSession, PreviewSessionStatus } from "@/lib/contracts";
 import { DEFAULT_CROP, MAX_INPUT_PIXELS, MAX_UPLOAD_BYTES } from "@/lib/constants";
 import { ApiError } from "@/domains/auth/http";
 import { sha256, stableJson } from "@/domains/auth/security";
 import { validateStoredOpticalProfile } from "@/domains/profiles/profile-service";
 import {
   DEFAULT_SCENE_ID,
+  findLegacySceneV1Identity,
   findPublishedScene,
   type PublishedSceneId
 } from "@/domains/scenes/catalog";
@@ -30,7 +31,7 @@ import {
 } from "@/domains/sessions/access-service";
 import { assetStorageKeys, findAsset, insertAsset, type AssetRecord } from "@/repositories/assets";
 import { findProfile, findPublishedProfile } from "@/repositories/profiles";
-import { findPreviewSession } from "@/repositories/preview-sessions";
+import { findLatestSnapshotsForSessions, findPreviewSession } from "@/repositories/preview-sessions";
 import { getStorage } from "@/storage/filesystem-storage";
 import {
   enqueueStorageDeletions,
@@ -54,6 +55,13 @@ const SESSION_CREATION_WINDOW_MS = 60 * 60 * 1000;
 const DRAFT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
 const CONFIRMED_RETENTION_MS = 90 * 24 * 60 * 60 * 1000;
 const uploadWorkGate = new WorkGate(2, 4, "UPLOAD_CAPACITY_EXCEEDED");
+const SNAPSHOT_BACKED_STATUSES = new Set<PreviewSessionStatus>([
+  "confirmed",
+  "checkout_pending",
+  "paid",
+  "production_ready",
+  "completed"
+]);
 
 function assetRef(asset: AssetRecord | undefined, sessionId: string): AssetRef | undefined {
   if (!asset) return undefined;
@@ -69,12 +77,72 @@ function assetRef(asset: AssetRecord | undefined, sessionId: string): AssetRef |
   };
 }
 
+type SessionSceneReference = Pick<PreviewSession, "sceneId" | "sceneVersion" | "sceneChecksum">;
+
+function currentSceneReference(sceneId: string): SessionSceneReference {
+  const scene = findPublishedScene(sceneId);
+  if (!scene) throw new ApiError(500, "SCENE_RELEASE_MISSING", "The session scene is no longer published");
+  return {
+    sceneId: scene.id,
+    sceneVersion: scene.version,
+    sceneChecksum: scene.checksum
+  };
+}
+
+function snapshotSceneReference(design: Record<string, unknown>): SessionSceneReference {
+  const sceneId = design.sceneId;
+  const sceneVersion = design.sceneVersion;
+  const sceneChecksum = design.sceneChecksum;
+  if (typeof sceneId === "string" && sceneVersion === undefined && sceneChecksum === undefined) {
+    const legacyV1 = findLegacySceneV1Identity(sceneId);
+    if (legacyV1) {
+      return {
+        sceneId: legacyV1.id,
+        sceneVersion: legacyV1.version,
+        sceneChecksum: legacyV1.checksum
+      };
+    }
+  }
+  if (
+    typeof sceneId !== "string" ||
+    typeof sceneVersion !== "number" ||
+    !Number.isInteger(sceneVersion) ||
+    sceneVersion < 1 ||
+    typeof sceneChecksum !== "string" ||
+    !/^[a-f0-9]{64}$/.test(sceneChecksum)
+  ) {
+    throw new ApiError(500, "SCENE_SNAPSHOT_INVALID", "The confirmed design has an invalid saved scene reference");
+  }
+  return { sceneId, sceneVersion, sceneChecksum };
+}
+
+async function sessionSceneReference(
+  row: typeof previewSessions.$inferSelect,
+  knownSnapshot?: typeof designSnapshots.$inferSelect | null
+): Promise<SessionSceneReference> {
+  if (row.status === "draft") return currentSceneReference(row.sceneId);
+
+  const snapshot = knownSnapshot === undefined
+    ? (await findLatestSnapshotsForSessions([row.id])).get(row.id)
+    : knownSnapshot ?? undefined;
+  if (snapshot) return snapshotSceneReference(snapshot.design);
+
+  // Expired rows are administrative tombstones after retention has removed
+  // their snapshot. They cannot be reopened, so only expose the current label.
+  if (row.status === "expired") return currentSceneReference(row.sceneId);
+  if (SNAPSHOT_BACKED_STATUSES.has(row.status)) {
+    throw new ApiError(500, "SCENE_SNAPSHOT_MISSING", "The confirmed design scene snapshot is missing");
+  }
+  return currentSceneReference(row.sceneId);
+}
+
 export async function serializeSession(row: typeof previewSessions.$inferSelect): Promise<PreviewSession> {
-  const [profile, source, preview, previewSettings] = await Promise.all([
+  const [profile, source, preview, previewSettings, sceneReference] = await Promise.all([
     findProfile(row.opticalProfileId),
     row.sourceAssetId ? findAsset(row.sourceAssetId) : undefined,
     row.previewAssetId ? findAsset(row.previewAssetId) : undefined,
-    getPreviewRuntimeSettings()
+    getPreviewRuntimeSettings(),
+    sessionSceneReference(row)
   ]);
   if (!profile) throw new ApiError(500, "PROFILE_MISSING", "The session optical profile no longer exists");
   const opticalRuntime = await validateStoredOpticalProfile(profile);
@@ -128,7 +196,7 @@ export async function serializeSession(row: typeof previewSessions.$inferSelect)
       }
     },
     previewSettings,
-    sceneId: row.sceneId,
+    ...sceneReference,
     crop: row.crop,
     camera: row.camera,
     source: assetRef(source, row.id),
@@ -141,12 +209,14 @@ export async function serializeSession(row: typeof previewSessions.$inferSelect)
 }
 
 export async function serializeAdminSession(
-  row: typeof previewSessions.$inferSelect
+  row: typeof previewSessions.$inferSelect,
+  snapshot?: typeof designSnapshots.$inferSelect | null
 ): Promise<Omit<PreviewSession, "opticalRuntime" | "previewSettings">> {
-  const [profile, source, preview] = await Promise.all([
+  const [profile, source, preview, sceneReference] = await Promise.all([
     findProfile(row.opticalProfileId),
     row.sourceAssetId ? findAsset(row.sourceAssetId) : undefined,
-    row.previewAssetId ? findAsset(row.previewAssetId) : undefined
+    row.previewAssetId ? findAsset(row.previewAssetId) : undefined,
+    sessionSceneReference(row, snapshot)
   ]);
   if (!profile) throw new ApiError(500, "PROFILE_MISSING", "The session optical profile no longer exists");
   return {
@@ -160,7 +230,7 @@ export async function serializeAdminSession(
       version: profile.version,
       status: profile.status
     },
-    sceneId: row.sceneId,
+    ...sceneReference,
     crop: row.crop,
     camera: row.camera,
     source: assetRef(source, row.id),

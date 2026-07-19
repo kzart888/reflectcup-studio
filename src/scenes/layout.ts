@@ -99,4 +99,7 @@ export const LEGACY_CAMP_SCENE_LAYOUT_V3 = Object.freeze({
   },
 });
 
-export const PREVIEW_CAMERA_FAR_METRES = 8;
+// The grounded forest dome has a 7.1 m radius. At the maximum orbit distance
+// the camera can sit just over a metre away from its centre, so an 8 m far
+// plane can clip the far side at a legal low-angle view.
+export const PREVIEW_CAMERA_FAR_METRES = 12;

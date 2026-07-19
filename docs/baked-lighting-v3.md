@@ -1,6 +1,6 @@
 # Baked lighting v3
 
-This document records the v3 lighting outputs generated for the two selected merchandising scenes and `curved-cup-v3`. The scene `table-shadow.png` files and profile `cup-contact-ao.png` are reused byte-for-byte by the current home/forest v4 compositions as display-only runtime assets. The planar irradiance files and proof images remain staged/review outputs. None alters the optical profile, LUT, crop, source image or authoritative production PNG.
+This document records the v3 lighting outputs generated for the two selected merchandising scenes and `curved-cup-v3`. The scene `table-shadow.png` files and profile `cup-contact-ao.png` are reused byte-for-byte by current home v5 and forest v5 as display-only runtime assets. Home v5 changes its environment/background and removes the v4 room furniture without modifying this fixed-subject table projection. Forest v5 also has a separately versioned context-occlusion layer described below; it is not retroactively part of this v3 Cycles bake. The planar irradiance files and proof images remain staged/review outputs. None alters the optical profile, LUT, crop, source image or authoritative production PNG.
 
 ## Rebuild command
 
@@ -46,6 +46,12 @@ The shadow source uses the measured 182.4924 mm plate diameter, the v3 cup axis 
 
 The alpha coverage includes pixels hidden under the physical saucer at runtime. The proof composites the saucer after the decal so the review image shows the visible outer projection rather than overstating hidden shadow energy.
 
+### Forest v5 context occlusion
+
+`public/scenes/forest-camp-evening/v5/lighting/forest-context-occlusion.png` is a separate transparent 512 × 512 RGBA baked placement layer drawn over a 9 × 9 m presentation footprint beneath the Pine Forest props. The v5 release draws it at opacity `0.48`. Its size is 5,224 bytes and SHA-256 is `7bb82f102a9615220a204a70c4036d27b553f847f021e49fc9d908b63bc747bb`. It does not restore the removed opaque Pine Forest ground mesh/material/images.
+
+This decal is not the v3 `static-irradiance-lightmap.png`, not a geometry-matched UV2 bake and not evidence of full-scene direct/indirect illumination. It enters only the preview backdrop and is checksum-bound by forest v5.
+
 ## Profile-specific cup contact AO
 
 `public/profiles/curved-cup-v3/lighting/cup-contact-ao.png` is generated against the v3 spherical-cap dish and a conforming cup foot. A Cycles ambient-occlusion shader uses a 12 mm ray distance. The post-bake physical envelope retains the measured AO signal, peaks within 1–3 mm of the cup foot, and reaches zero by 12 mm. The alpha is clipped to the saucer and centered at the profile cup axis; it is not shared with `nominal-v1` or `curved-cup-v2`.
@@ -62,4 +68,4 @@ The alpha coverage includes pixels hidden under the physical saucer at runtime. 
 
 The runtime draws each scene projection immediately above the tabletop receiver with depth writes disabled and draws cup AO only as a display overlay on the dish top. Neither texture is referenced by the canonical plate renderer, production worker, style lab, LUT generator or manufacturing package.
 
-The planar irradiance maps establish a reproducible fixed-light baseline, but they are not claimed as final static-scene AO and are not consumed by the current GLBs. A future scene version needs geometry with matching non-overlapping UV2 islands before walls, furniture, forest floor, tent and props can consume a geometry-matched Cycles AO/direct/indirect bake. Publishing that later bake requires a new immutable scene version and checksum; it must not silently replace the current v4 releases or the pinned v3 history.
+The planar irradiance maps establish a reproducible fixed-light baseline, but they are not claimed as final static-scene AO and are not consumed by the current GLBs. A future scene version needs geometry with matching non-overlapping UV2 islands before walls, furniture, a true forest ground and props can consume a geometry-matched Cycles AO/direct/indirect bake. The Lythwood Lounge and Nature Reserve Forest `GroundedSkybox` projections supply only visual background/ground and are not such geometry or lighting. Publishing a later bake requires a new immutable scene version and checksum; it must not silently replace current home v5 or forest v5, nor any pinned v1-v4 history.

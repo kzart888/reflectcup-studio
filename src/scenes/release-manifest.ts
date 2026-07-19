@@ -41,17 +41,25 @@ export type SceneAssetFile = {
 
 export type SceneQualityManifest = {
   environmentKey: string;
+  /** Optional LDR equirectangular background kept separate from HDR PMREM. */
+  backgroundKey?: string;
   textureKeys: readonly string[];
   modelKeys?: Readonly<Record<string, string>>;
 };
 
 export type SceneVisualContract = {
   background: {
-    mode: "environment" | "solid";
+    mode: "environment" | "grounded-environment" | "solid";
     color: string;
     blur: number;
     intensity: number;
     rotationY: number;
+    groundProjection?: {
+      captureHeight: number;
+      radius: number;
+      groundLevel: number;
+      resolution: number;
+    };
   };
   lighting: {
     ambientIntensity: number;
@@ -548,8 +556,7 @@ export const LEGACY_SCENE_V3_RELEASES = [
   },
 ] as const satisfies readonly SceneRelease[];
 
-export const SCENE_RELEASES = [
-  LEGACY_SCENE_V2_RELEASES[0],
+export const LEGACY_SCENE_V4_RELEASES = [
   {
     ...LEGACY_SCENE_V3_RELEASES[0],
     version: 4,
@@ -618,6 +625,237 @@ export const SCENE_RELEASES = [
     renderContract: {
       ...LEGACY_SCENE_V3_RELEASES[1].renderContract,
       geometryVersion: "cc0-game-ready-context-v4",
+    },
+  },
+] as const satisfies readonly SceneRelease[];
+
+const forestV3ReusableAssets = LEGACY_SCENE_V3_RELEASES[1].assets.filter((asset) => ![
+  "environment-1k",
+  "environment-2k",
+  "model-tent",
+].includes(asset.key));
+
+const homeV3ReusableAssets = LEGACY_SCENE_V3_RELEASES[0].assets.filter((asset) => [
+  "model-table",
+  "model-table-low",
+  "table-shadow",
+  "cup-contact-ao",
+].includes(asset.key));
+
+export const SCENE_RELEASES = [
+  LEGACY_SCENE_V2_RELEASES[0],
+  {
+    ...LEGACY_SCENE_V4_RELEASES[0],
+    version: 5,
+    checksum: "a69ed575767d84ee8105f8300bd4a3febb80931ad40bccb88147a70c04abeee1",
+    assets: [
+      ...homeV3ReusableAssets,
+      {
+        key: "environment-1k",
+        url: "/scenes/warm-craftsman-home/v5/lythwood-lounge-1k-7de73ed75fbd5217.hdr",
+        bytes: 1_538_903,
+        sha256: "7de73ed75fbd52179152230198b3fb18bf8c36993b5608b724e899c426e53f78",
+      },
+      {
+        key: "environment-2k",
+        url: "/scenes/warm-craftsman-home/v5/lythwood-lounge-2k-04cce69276d91353.hdr",
+        bytes: 6_090_881,
+        sha256: "04cce69276d91353c41804c3a6b2d65bfef0119372aac5707ab73790933e60b7",
+      },
+      {
+        key: "background-low",
+        url: "/scenes/warm-craftsman-home/v5/lythwood-lounge-background-low-0c7a9c83ac55e413.jpg",
+        bytes: 27_833,
+        sha256: "0c7a9c83ac55e413228bb8beabe8407b80de2885f3a80baf182497a8c3ae16dc",
+      },
+      {
+        key: "background-1k",
+        url: "/scenes/warm-craftsman-home/v5/lythwood-lounge-background-1k-d56fb46a1cdbd555.jpg",
+        bytes: 51_291,
+        sha256: "d56fb46a1cdbd5556fe03ea5784571866a16dde40f07d10cee3d40ad85791ce9",
+      },
+      {
+        key: "background-4k",
+        url: "/scenes/warm-craftsman-home/v5/lythwood-lounge-background-4k-a866ae33dfb08abf.webp",
+        bytes: 695_002,
+        sha256: "a866ae33dfb08abff5212feb596abe0a30b3462f2429347274a94eb8c3ec0367",
+      },
+    ],
+    qualityAssets: {
+      low: {
+        environmentKey: "environment-1k",
+        backgroundKey: "background-low",
+        textureKeys: [],
+        modelKeys: { table: "model-table-low" },
+      },
+      medium: {
+        environmentKey: "environment-1k",
+        backgroundKey: "background-1k",
+        textureKeys: [],
+        modelKeys: { table: "model-table" },
+      },
+      high: {
+        environmentKey: "environment-2k",
+        backgroundKey: "background-4k",
+        textureKeys: [],
+        modelKeys: { table: "model-table" },
+      },
+    },
+    visual: {
+      ...LEGACY_SCENE_V4_RELEASES[0].visual,
+      background: {
+        mode: "grounded-environment",
+        color: "#d8c6aa",
+        blur: 0.035,
+        intensity: 0.88,
+        rotationY: -2.6,
+        groundProjection: {
+          captureHeight: 1.207282,
+          radius: 7.1,
+          groundLevel: -0.727282,
+          resolution: 64,
+        },
+      },
+      lighting: {
+        ambientIntensity: 0.36,
+        environmentIntensity: 0.94,
+        heroPosition: [0.34, 0.66, 0.46],
+        heroColor: "#fff0d2",
+        heroIntensity: 2.2,
+      },
+      subject: { printAmbient: 0.62 },
+    },
+    renderContract: {
+      ...LEGACY_SCENE_V4_RELEASES[0].renderContract,
+      geometryVersion: "cc0-table-plus-lythwood-lounge-v5",
+      rendererVersion: "reflective-subject-grounded-scene-v5",
+      environmentPipelineVersion: "lythwood-equirectangular-pmrem-v5",
+    },
+  },
+  {
+    ...LEGACY_SCENE_V4_RELEASES[1],
+    version: 5,
+    checksum: "2d9e08cfa0c92ea284e95c3b8f39ddb0979d63b03248dce69d1a3cbe33b291f6",
+    assets: [
+      ...forestV3ReusableAssets,
+      {
+        key: "environment-1k",
+        url: "/scenes/forest-camp-evening/v5/environment-1k.hdr",
+        bytes: 1_900_770,
+        sha256: "6c943ddd683de2f3d9aaa62596961dfccdc9cf206adebfc198e70235ae5707cd",
+      },
+      {
+        key: "background-low",
+        url: "/scenes/forest-camp-evening/v5/background-low.jpg",
+        bytes: 57_134,
+        sha256: "cb651d04b2c84832b8980dc9201440a7addde2e25e639b8a973e5806df5998ab",
+      },
+      {
+        key: "background-1k",
+        url: "/scenes/forest-camp-evening/v5/background-1k.jpg",
+        bytes: 80_603,
+        sha256: "321b8127e08ae2a3bef5375f70cb971068a97f97d40f0527f026853c71bd5371",
+      },
+      {
+        key: "background-4k",
+        url: "/scenes/forest-camp-evening/v5/background-4k.webp",
+        bytes: 2_894_558,
+        sha256: "b2c636a6a00b56f1b47a74428bcba301e956059a45188fbe46b3dc29f37168ee",
+      },
+      {
+        key: "model-forest-context-low",
+        url: "/scenes/forest-camp-evening/v5/models/pine-forest-props-low-46a9ce4b9e1217a4.glb",
+        bytes: 454_776,
+        sha256: "46a9ce4b9e1217a40eedec5cca5e9c33f0564cfcc8ef1e076979749fda6b942e",
+      },
+      {
+        key: "model-forest-context-medium",
+        url: "/scenes/forest-camp-evening/v5/models/pine-forest-props-medium-3fa78f9e225c8e8f.glb",
+        bytes: 1_298_620,
+        sha256: "3fa78f9e225c8e8f1104cd5c672bb410e2ca9292aeeffa56fddeb90d8c4c287b",
+      },
+      {
+        key: "model-forest-context-high",
+        url: "/scenes/forest-camp-evening/v5/models/pine-forest-props-high-149fc9facc78ecc4.glb",
+        bytes: 3_775_268,
+        sha256: "149fc9facc78ecc46a35ad302d58aef07d325c70a629df8fae78d35d14f192fa",
+      },
+      {
+        key: "forest-context-occlusion",
+        url: "/scenes/forest-camp-evening/v5/lighting/forest-context-occlusion.png",
+        bytes: 5_224,
+        sha256: "7bb82f102a9615220a204a70c4036d27b553f847f021e49fc9d908b63bc747bb",
+      },
+    ],
+    qualityAssets: {
+      low: {
+        environmentKey: "environment-1k",
+        backgroundKey: "background-low",
+        textureKeys: [],
+        modelKeys: {
+          tableSet: "model-table-set-low",
+          lantern: "model-lantern-low",
+          forestContext: "model-forest-context-low",
+        },
+      },
+      medium: {
+        environmentKey: "environment-1k",
+        backgroundKey: "background-1k",
+        textureKeys: [],
+        modelKeys: {
+          tableSet: "model-table-set",
+          lantern: "model-lantern",
+          forestContext: "model-forest-context-medium",
+        },
+      },
+      high: {
+        environmentKey: "environment-1k",
+        backgroundKey: "background-4k",
+        textureKeys: [],
+        modelKeys: {
+          tableSet: "model-table-set",
+          lantern: "model-lantern",
+          forestContext: "model-forest-context-high",
+        },
+      },
+    },
+    visual: {
+      ...LEGACY_SCENE_V4_RELEASES[1].visual,
+      background: {
+        mode: "grounded-environment",
+        color: "#182019",
+        blur: 0,
+        intensity: 0.82,
+        rotationY: -0.38,
+        groundProjection: {
+          captureHeight: 1.55,
+          radius: 7.1,
+          groundLevel: -0.734811735,
+          resolution: 64,
+        },
+      },
+      lighting: {
+        ambientIntensity: 0.34,
+        environmentIntensity: 0.9,
+        heroPosition: [0.28, 0.5, -0.42],
+        heroColor: "#ffd8a0",
+        heroIntensity: 2.18,
+      },
+      subject: { printAmbient: 0.58 },
+      groundOcclusion: {
+        assetKey: "forest-context-occlusion",
+        opacity: 0.48,
+        size: [9, 9],
+        offset: [0, 0],
+        rotation: 0,
+      },
+    },
+    renderContract: {
+      ...LEGACY_SCENE_V4_RELEASES[1].renderContract,
+      geometryVersion: "polyhaven-pine-forest-props-v5",
+      rendererVersion: "reflective-subject-grounded-scene-v5",
+      environmentPipelineVersion: "separate-hdr-pmrem-grounded-ldr-v5",
+      shadowPipelineVersion: "cycles-subject-plus-baked-context-occlusion-v5",
     },
   },
 ] as const satisfies readonly SceneRelease[];

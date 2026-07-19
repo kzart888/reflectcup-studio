@@ -28,6 +28,6 @@ describe("scene composition layout", () => {
 
   it("orients the indoor table across the design camera and retains the mid-ground", () => {
     expect(HOME_SCENE_LAYOUT.table.rotation[1]).toBeCloseTo(Math.PI / 2);
-    expect(PREVIEW_CAMERA_FAR_METRES).toBeGreaterThanOrEqual(6);
+    expect(PREVIEW_CAMERA_FAR_METRES).toBeGreaterThanOrEqual(12);
   });
 });

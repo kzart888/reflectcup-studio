@@ -115,6 +115,13 @@ function cloneOwnedScene(source: THREE.Group, options: {
       if (options.roughnessFloor !== undefined) {
         material.roughness = Math.max(options.roughnessFloor, material.roughness);
       }
+      if (material.name.toLowerCase().includes("fern") && material.map) {
+        material.alphaTest = 0.43;
+        material.transparent = false;
+        material.depthWrite = true;
+        material.side = THREE.DoubleSide;
+        material.needsUpdate = true;
+      }
     }
   });
   return clone;
@@ -340,7 +347,7 @@ function HomeScene({ descriptor, quality }: SceneBackdropProps) {
   const layout = descriptor.version >= 4 ? HOME_SCENE_LAYOUT : LEGACY_HOME_SCENE_LAYOUT_V3;
   return (
     <group name={`warm-craftsman-home-v${descriptor.version}`}>
-      {descriptor.version >= 4 ? <HomeRoomShell descriptor={descriptor} /> : null}
+      {descriptor.version === 4 ? <HomeRoomShell descriptor={descriptor} /> : null}
       <Suspense fallback={<LoadingTable color="#b37b45" />}>
         <SceneModel
           url={models.table}
@@ -348,11 +355,11 @@ function HomeScene({ descriptor, quality }: SceneBackdropProps) {
           position={layout.table.position}
           rotation={layout.table.rotation}
           scale={layout.table.scale}
-          materialTint="#e3edf9"
+          materialTint={descriptor.version < 5 ? "#e3edf9" : undefined}
           roughnessFloor={0.56}
         />
       </Suspense>
-      <Suspense fallback={null}>
+      {descriptor.version < 5 ? <Suspense fallback={null}>
         <SceneModel
           url={models.sofa}
           name="cc0-sofa"
@@ -360,8 +367,8 @@ function HomeScene({ descriptor, quality }: SceneBackdropProps) {
           rotation={layout.sofa.rotation}
           scale={layout.sofa.scale}
         />
-      </Suspense>
-      <Suspense fallback={null}>
+      </Suspense> : null}
+      {descriptor.version < 5 ? <Suspense fallback={null}>
         <SceneModel
           url={models.plant}
           name="cc0-potted-plant"
@@ -369,7 +376,7 @@ function HomeScene({ descriptor, quality }: SceneBackdropProps) {
           rotation={layout.plant.rotation}
           scale={layout.plant.scale}
         />
-      </Suspense>
+      </Suspense> : null}
       <BakedGroundOcclusion descriptor={descriptor} y={HOME_FLOOR_Y} />
     </group>
   );
@@ -381,7 +388,14 @@ function CampScene({ descriptor, quality }: SceneBackdropProps) {
   const layout = legacyLayout ? LEGACY_CAMP_SCENE_LAYOUT_V3 : CAMP_SCENE_LAYOUT;
   return (
     <group name={`forest-camp-evening-v${descriptor.version}`}>
-      {descriptor.version >= 4 ? <ForestContextGeometry /> : null}
+      {descriptor.version === 4 ? <ForestContextGeometry /> : null}
+      {descriptor.version >= 5 ? <Suspense fallback={null}>
+        <SceneModel
+          url={models.forestContext}
+          name="cc0-polyhaven-pine-forest-context"
+          position={[0, CAMP_FLOOR_Y, 0]}
+        />
+      </Suspense> : null}
       <Suspense fallback={<LoadingTable color="#674a39" />}>
         <SceneModel
           url={models.tableSet}
@@ -389,11 +403,11 @@ function CampScene({ descriptor, quality }: SceneBackdropProps) {
           position={layout.tableSet.position}
           rotation={layout.tableSet.rotation}
           hiddenNodeNames={LEGACY_CAMP_SCENE_LAYOUT_V3.tableSet.hiddenNodeNames}
-          materialTint="#735f53"
-          roughnessFloor={0.5}
+          materialTint={descriptor.version < 5 ? "#735f53" : undefined}
+          roughnessFloor={descriptor.version < 5 ? 0.5 : 0.42}
         />
       </Suspense>
-      <Suspense fallback={null}>
+      {descriptor.version < 5 ? <Suspense fallback={null}>
         <SceneModel
           url={models.tent}
           name="cc0-kenney-tent"
@@ -403,7 +417,7 @@ function CampScene({ descriptor, quality }: SceneBackdropProps) {
           materialTint="#b9b69b"
           roughnessFloor={0.78}
         />
-      </Suspense>
+      </Suspense> : null}
       <Suspense fallback={null}>
         <SceneModel
           url={models.lantern}

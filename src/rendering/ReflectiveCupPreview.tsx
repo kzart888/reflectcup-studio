@@ -7,13 +7,15 @@ import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { GroundedSkybox } from "three/examples/jsm/objects/GroundedSkybox.js";
 import type { CameraState, CropTransform, OpticalRuntime, PreviewRuntimeSettings, SceneQuality } from "@/lib/contracts";
 import { getDishReflectionParameters } from "@/optics";
 import type { DishReflectionParameters, OpticalProfile } from "@/optics";
 import { createCupHandleGeometry, createInnerCupGeometry, CUP_RIM_RADIUS, CUP_WALL_THICKNESS } from "@/rendering/cup-geometry";
 import { createDishGeometry, createDishSolidGeometry } from "@/rendering/dish-geometry";
 import { cupFragmentShader, opticalVertexShader, plateFragmentShader } from "@/rendering/shaders";
-import { CUSTOMER_SCENES, getSceneDescriptor, type SceneDescriptor } from "@/scenes/catalog";
+import { groundedSkyboxResolution, subjectGeometryDetail } from "@/rendering/subject-quality";
+import { getSceneDescriptor, type SceneDescriptor } from "@/scenes/catalog";
 import { SceneBackdrop } from "@/scenes/SceneBackdrop";
 import { PREVIEW_CAMERA_FAR_METRES } from "@/scenes/layout";
 import { browserSceneRuntimeHints, initialSceneQuality } from "@/scenes/runtime-policy";
@@ -167,7 +169,7 @@ function ProfileContactAo({ geometry, url }: { geometry: THREE.BufferGeometry; u
   </mesh>;
 }
 
-function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor, keyLightMultiplier }: {
+function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor, keyLightMultiplier, quality }: {
   profile: OpticalProfile;
   sourceTexture: THREE.Texture | null;
   lutTexture: THREE.DataTexture;
@@ -175,9 +177,17 @@ function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor
   crop: CropTransform;
   descriptor: SceneDescriptor;
   keyLightMultiplier: number;
+  quality: SceneQuality;
 }) {
-  const topGeometry = useMemo(() => createDishGeometry(profile), [profile]);
-  const solidGeometry = useMemo(() => createDishSolidGeometry(profile), [profile]);
+  const detail = subjectGeometryDetail(quality, descriptor.renderContract.rendererVersion);
+  const topGeometry = useMemo(
+    () => createDishGeometry(profile, detail.dishRadialSegments, detail.dishAngularSegments),
+    [detail, profile],
+  );
+  const solidGeometry = useMemo(
+    () => createDishSolidGeometry(profile, 0.002, detail.dishRadialSegments, detail.dishAngularSegments),
+    [detail, profile],
+  );
   const opticalUniforms = useOpticalUniforms(sourceTexture, lutTexture, sourceSize, crop);
   const uniforms = useMemo(() => ({
     ...opticalUniforms,
@@ -201,7 +211,7 @@ function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor
       <meshPhysicalMaterial color="#f7f5ef" roughness={0.22} metalness={0} clearcoat={0.2} clearcoatRoughness={0.18} envMapIntensity={0.86} />
     </mesh>
     <mesh position={[profile.dish.center[0], rimY - 0.0006, profile.dish.center[2]]} rotation={[Math.PI / 2, 0, 0]}>
-      <torusGeometry args={[profile.dish.radius - 0.0006, 0.0006, 6, 128]} />
+      <torusGeometry args={[profile.dish.radius - 0.0006, 0.0006, 6, detail.dishRimTubularSegments]} />
       <meshPhysicalMaterial color="#f7f5ef" roughness={0.2} clearcoat={0.18} clearcoatRoughness={0.18} envMapIntensity={0.82} />
     </mesh>
     <mesh geometry={topGeometry} position={[0, 0.00012, 0]} renderOrder={2}>
@@ -234,7 +244,7 @@ export function createEnvironmentRotation(rotationY: number): THREE.Matrix3 {
     .transpose();
 }
 
-function Cup({ profile, dish, sourceTexture, lutTexture, environmentTexture, sourceSize, crop, descriptor }: {
+function Cup({ profile, dish, sourceTexture, lutTexture, environmentTexture, sourceSize, crop, descriptor, quality }: {
   profile: OpticalProfile;
   dish: DishReflectionParameters;
   sourceTexture: THREE.Texture | null;
@@ -243,13 +253,21 @@ function Cup({ profile, dish, sourceTexture, lutTexture, environmentTexture, sou
   sourceSize: readonly [number, number];
   crop: CropTransform;
   descriptor: SceneDescriptor;
+  quality: SceneQuality;
 }) {
+  const detail = subjectGeometryDetail(quality, descriptor.renderContract.rendererVersion);
   const outerGeometry = useMemo(() => new THREE.LatheGeometry(
     profile.cup.radialProfile.map((point) => new THREE.Vector2(point.radius, point.y)),
-    128,
-  ), [profile]);
-  const innerGeometry = useMemo(() => createInnerCupGeometry(profile), [profile]);
-  const handleGeometry = useMemo(() => createCupHandleGeometry(profile), [profile]);
+    detail.cupOuterSegments,
+  ), [detail, profile]);
+  const innerGeometry = useMemo(
+    () => createInnerCupGeometry(profile, detail.cupInnerSegments),
+    [detail, profile],
+  );
+  const handleGeometry = useMemo(
+    () => createCupHandleGeometry(profile, detail.cupHandleTubularSegments, detail.cupHandleRadialSegments),
+    [detail, profile],
+  );
   const opticalUniforms = useOpticalUniforms(sourceTexture, lutTexture, sourceSize, crop);
   const environmentRotation = useMemo(
     () => createEnvironmentRotation(descriptor.background.rotationY),
@@ -295,15 +313,15 @@ function Cup({ profile, dish, sourceTexture, lutTexture, environmentTexture, sou
       <meshPhysicalMaterial color="#f7f6f2" roughness={0.18} metalness={0} clearcoat={0.22} clearcoatRoughness={0.16} envMapIntensity={0.95} side={THREE.BackSide} />
     </mesh>
     <mesh position={[0, top.y - CUP_RIM_RADIUS, 0]} rotation={[Math.PI / 2, 0, 0]}>
-      <torusGeometry args={[top.radius - CUP_RIM_RADIUS, CUP_RIM_RADIUS, 8, 128]} />
+      <torusGeometry args={[top.radius - CUP_RIM_RADIUS, CUP_RIM_RADIUS, 8, detail.cupRimTubularSegments]} />
       <meshPhysicalMaterial color="#f7f6f2" roughness={0.16} clearcoat={0.26} clearcoatRoughness={0.14} envMapIntensity={1} />
     </mesh>
     <mesh position={[0, bottom.y - CUP_WALL_THICKNESS / 2, 0]}>
-      <cylinderGeometry args={[bottom.radius, bottom.radius, CUP_WALL_THICKNESS, 96]} />
+      <cylinderGeometry args={[bottom.radius, bottom.radius, CUP_WALL_THICKNESS, detail.cupBaseSegments]} />
       <meshPhysicalMaterial color="#f6f4ee" roughness={0.23} clearcoat={0.16} clearcoatRoughness={0.2} envMapIntensity={0.8} />
     </mesh>
     <mesh position={[0, bottom.y + CUP_WALL_THICKNESS, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-      <circleGeometry args={[innerBottomRadius, 96]} />
+      <circleGeometry args={[innerBottomRadius, detail.cupBaseSegments]} />
       <meshPhysicalMaterial color="#f7f6f2" roughness={0.2} clearcoat={0.2} clearcoatRoughness={0.18} envMapIntensity={0.9} side={THREE.DoubleSide} />
     </mesh>
     <mesh geometry={handleGeometry}>
@@ -376,20 +394,29 @@ function useSceneEnvironment(
   };
 }
 
-const retainedSceneCacheIds: string[] = [];
+const retainedSceneCacheKeys: string[] = [];
+const retainedSceneDescriptors = new Map<string, SceneDescriptor>();
+
+function sceneCacheKey(descriptor: SceneDescriptor): string {
+  return `${descriptor.id}:v${descriptor.version}:${descriptor.checksum}`;
+}
 
 function retainSceneAssetCache(descriptor: SceneDescriptor): void {
-  const previousIndex = retainedSceneCacheIds.indexOf(descriptor.id);
-  if (previousIndex >= 0) retainedSceneCacheIds.splice(previousIndex, 1);
-  retainedSceneCacheIds.push(descriptor.id);
-  if (retainedSceneCacheIds.length <= 2) return;
+  const key = sceneCacheKey(descriptor);
+  const previousIndex = retainedSceneCacheKeys.indexOf(key);
+  if (previousIndex >= 0) retainedSceneCacheKeys.splice(previousIndex, 1);
+  retainedSceneCacheKeys.push(key);
+  retainedSceneDescriptors.set(key, descriptor);
+  if (retainedSceneCacheKeys.length <= 2) return;
 
-  const evictedId = retainedSceneCacheIds.shift();
-  const evicted = CUSTOMER_SCENES.find((scene) => scene.id === evictedId);
+  const evictedKey = retainedSceneCacheKeys.shift();
+  const evicted = evictedKey ? retainedSceneDescriptors.get(evictedKey) : undefined;
+  if (evictedKey) retainedSceneDescriptors.delete(evictedKey);
   if (!evicted) return;
   const retainedUrls = new Set(
-    CUSTOMER_SCENES
-      .filter((scene) => retainedSceneCacheIds.includes(scene.id))
+    retainedSceneCacheKeys
+      .map((retainedKey) => retainedSceneDescriptors.get(retainedKey))
+      .filter((scene): scene is SceneDescriptor => Boolean(scene))
       .flatMap((scene) => Object.values(scene.assetUrls)),
   );
   for (const url of Object.values(evicted.assetUrls)) {
@@ -448,10 +475,69 @@ function restoreSceneEnvironment(scene: THREE.Scene, snapshot: SceneEnvironmentS
   scene.environmentRotation.copy(snapshot.environmentRotation);
 }
 
-function SceneEnvironment({ descriptor, source, pmrem }: {
+function GroundedSceneBackground({ descriptor, quality }: {
+  descriptor: SceneDescriptor;
+  quality: SceneQuality;
+}) {
+  const url = descriptor.qualityAssets[quality].background;
+  const projection = descriptor.background.groundProjection;
+  if (!url || !projection) return null;
+  return <GroundedSceneBackgroundAsset descriptor={descriptor} url={url} projection={projection} quality={quality} />;
+}
+
+function GroundedSceneBackgroundAsset({ descriptor, url, projection, quality }: {
+  descriptor: SceneDescriptor;
+  url: string;
+  projection: NonNullable<SceneDescriptor["background"]["groundProjection"]>;
+  quality: SceneQuality;
+}) {
+  const source = useLoader(THREE.TextureLoader, url);
+  const { invalidate } = useThree();
+  const texture = useMemo(() => {
+    const result = source.clone();
+    result.colorSpace = THREE.SRGBColorSpace;
+    result.wrapS = THREE.RepeatWrapping;
+    result.wrapT = THREE.ClampToEdgeWrapping;
+    result.minFilter = THREE.LinearMipmapLinearFilter;
+    result.magFilter = THREE.LinearFilter;
+    result.needsUpdate = true;
+    return result;
+  }, [source]);
+  const skybox = useMemo(() => {
+    const result = new GroundedSkybox(
+      texture,
+      projection.captureHeight,
+      projection.radius,
+      groundedSkyboxResolution(quality, projection.resolution),
+    );
+    result.name = "grounded-forest-environment";
+    result.position.set(0, projection.groundLevel + projection.captureHeight, 0);
+    result.rotation.y = descriptor.background.rotationY;
+    result.renderOrder = -1_000;
+    result.frustumCulled = false;
+    result.material.color.setScalar(descriptor.background.intensity);
+    // The JPEG is already display-referred and tone-mapped. Sending it
+    // through the renderer's ACES pass again darkens it and breaks the visual
+    // match with the separately prefiltered HDR environment.
+    result.material.toneMapped = false;
+    return result;
+  }, [descriptor.background.intensity, descriptor.background.rotationY, projection, quality, texture]);
+  useEffect(() => {
+    invalidate();
+    return () => {
+      skybox.geometry.dispose();
+      skybox.material.dispose();
+      texture.dispose();
+    };
+  }, [invalidate, skybox, texture]);
+  return <primitive object={skybox} dispose={null} />;
+}
+
+function SceneEnvironment({ descriptor, source, pmrem, quality }: {
   descriptor: SceneDescriptor;
   source: THREE.Texture;
   pmrem: THREE.Texture;
+  quality: SceneQuality;
 }) {
   const { scene, invalidate } = useThree();
   const solidBackground = useMemo(() => new THREE.Color(descriptor.background.color), [descriptor.background.color]);
@@ -461,7 +547,9 @@ function SceneEnvironment({ descriptor, source, pmrem }: {
     invalidate();
     return () => restoreSceneEnvironment(scene, previous);
   }, [descriptor, invalidate, pmrem, scene, solidBackground, source]);
-  return null;
+  return descriptor.background.mode === "grounded-environment"
+    ? <GroundedSceneBackground descriptor={descriptor} quality={quality} />
+    : null;
 }
 
 function CameraController({ profile, onCameraChange, resetNonce, cameraState }: Pick<Props, "onCameraChange" | "resetNonce" | "cameraState"> & { profile: OpticalProfile }) {
@@ -576,7 +664,7 @@ function SceneContents({ sourceUrl, sourceSize = [1, 1], crop, cameraState, opti
   const opticalReady = lutTextureState.status === "ready";
   const sourceReady = sourceTextureState.status === "ready";
   return <>
-    {environment.pmrem ? <SceneEnvironment descriptor={descriptor} source={environment.source} pmrem={environment.pmrem} /> : null}
+    {environment.pmrem ? <SceneEnvironment descriptor={descriptor} source={environment.source} pmrem={environment.pmrem} quality={quality} /> : null}
     <ambientLight intensity={descriptor.lighting.ambientIntensity} />
     <directionalLight
       position={[...descriptor.lighting.heroPosition]}
@@ -584,8 +672,8 @@ function SceneContents({ sourceUrl, sourceSize = [1, 1], crop, cameraState, opti
       intensity={descriptor.lighting.heroIntensity * previewSettings.keyLightMultiplier}
     />
     <SceneBackdrop descriptor={descriptor} quality={quality} />
-    {opticalReady ? <Dish profile={profile} sourceTexture={sourceReady ? sourceTextureState.value : null} lutTexture={lutTextureState.value} sourceSize={sourceSize} crop={crop} descriptor={descriptor} keyLightMultiplier={previewSettings.keyLightMultiplier} /> : null}
-    {opticalReady && environment.pmrem ? <Cup profile={profile} dish={dish} sourceTexture={sourceReady ? sourceTextureState.value : null} lutTexture={lutTextureState.value} environmentTexture={environment.pmrem} sourceSize={sourceSize} crop={crop} descriptor={descriptor} /> : null}
+    {opticalReady ? <Dish profile={profile} sourceTexture={sourceReady ? sourceTextureState.value : null} lutTexture={lutTextureState.value} sourceSize={sourceSize} crop={crop} descriptor={descriptor} keyLightMultiplier={previewSettings.keyLightMultiplier} quality={quality} /> : null}
+    {opticalReady && environment.pmrem ? <Cup profile={profile} dish={dish} sourceTexture={sourceReady ? sourceTextureState.value : null} lutTexture={lutTextureState.value} environmentTexture={environment.pmrem} sourceSize={sourceSize} crop={crop} descriptor={descriptor} quality={quality} /> : null}
     <PerformanceMonitor
       flipflops={2}
       onDecline={() => {

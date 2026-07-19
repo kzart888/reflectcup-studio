@@ -50,7 +50,11 @@ function radiusAt(profile: OpticalProfile, y: number): number {
   return points.at(-1)!.radius;
 }
 
-export function createCupHandleGeometry(profile: OpticalProfile): THREE.TubeGeometry {
+export function createCupHandleGeometry(
+  profile: OpticalProfile,
+  tubularSegments = 48,
+  radialSegments = 12,
+): THREE.TubeGeometry {
   const bottom = profile.cup.radialProfile[0].y;
   const top = profile.cup.radialProfile.at(-1)!.y;
   const attachBottomY = THREE.MathUtils.lerp(bottom, top, 0.29);
@@ -68,5 +72,5 @@ export function createCupHandleGeometry(profile: OpticalProfile): THREE.TubeGeom
     new THREE.Vector3(-0.052, THREE.MathUtils.lerp(attachBottomY, middleY, 0.28), 0),
     new THREE.Vector3(attachBottomX, attachBottomY, 0),
   ], false, "centripetal");
-  return new THREE.TubeGeometry(curve, 48, CUP_HANDLE_RADIUS, 12, false);
+  return new THREE.TubeGeometry(curve, tubularSegments, CUP_HANDLE_RADIUS, radialSegments, false);
 }

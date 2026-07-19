@@ -1,6 +1,6 @@
 # AI hidden-image roadmap
 
-Status: research and implementation plan, 2026-07-19. No customer-facing AI control is enabled yet.
+Status: provisional research and non-executable contract scaffold, updated 2026-07-20. No model workflow, provider adapter, network execution or customer-facing AI control is enabled.
 
 ## Decision
 
@@ -41,7 +41,19 @@ For faces, IP-Adapter/InstantID-class identity conditioning can improve semantic
 
 ## Track A: ComfyUI feasibility baseline
 
+Track A is a pinned experiment matrix rather than a single model. Every arm must receive the same prepared target, optical profile, seed count and post-generation reflection scoring:
+
+| Arm | Purpose | Control input | Current position |
+|---|---|---|---|
+| `A0-qr-monster` | Preserve the original fast baseline and comparison with common QR-art workflows | neutral-gray QR/structure condition | Useful compatibility baseline; not the preferred new default |
+| `A1-z-image-union` | Preferred fast feasibility arm | Gray, Scribble and HED, tested separately | First arm to implement after model/license/hash pinning |
+| `A2-ptdiffusion` | Slow research comparison for natural hidden art | phase-transferred fixed reference | Offline comparison, not an initial hosted-Comfy requirement |
+
 QR Monster v2 is a ControlNet, not a per-customer LoRA. Its [official model card](https://huggingface.co/monster-labs/control_v1p_sd15_qrcode_monster) explicitly describes the structure/creativity trade-off, recommends a neutral `#808080` surround and expects multi-seed selection. It also warns that not every generated condition remains readable.
+
+`A1` combines [Z-Image-Turbo](https://huggingface.co/Tongyi-MAI/Z-Image-Turbo) with [Z-Image-Turbo Fun ControlNet Union 2.1](https://huggingface.co/alibaba-pai/Z-Image-Turbo-Fun-Controlnet-Union-2.1). Both official model cards declare Apache-2.0. The Union 2602 model lists Canny, Depth, Pose, MLSD, HED, Scribble and Gray controls, while the official [ComfyUI `ZImageFunControlnet` node](https://docs.comfy.org/built-in-nodes/ZImageFunControlnet) supplies a native model-patch boundary. For ReflectCup, Gray should be tested against `tonal`, Scribble/HED against `contour`, and Gray plus a restrained HED branch against `hybrid`. The model card reports an eight-step distilled variant, but actual latency, memory, control leakage and commercial model inventory still require a pinned local benchmark.
+
+`A2` uses [PTDiffusion, CVPR 2025](https://xianggao1102.github.io/PTDiffusion_webpage/) as a research arm. Its training-free phase-transfer mechanism blends a fixed reference into a text-described scene and exposes an asynchronous phase parameter for hidden-content discernibility. This is highly relevant to natural plate artwork, but it is not profile-aware and is not a ready-made standard ComfyUI workflow; the authoritative cup reflection score must still rank its outputs.
 
 ```text
 ReflectCup server
@@ -76,6 +88,8 @@ Initial experiment grid:
 Add [T2I-Adapter SDXL lineart/sketch](https://github.com/TencentARC/T2I-Adapter) as a comparison arm. Its official implementation states that SDXL inference needs about 15 GB VRAM. It will probably retain contours better but expose the hidden drawing more clearly on the plate.
 
 Track A can run with standard ComfyUI nodes and a small ReflectCup pre/post-processing service. It validates product desirability and prompt/style categories; it does not prove that arbitrary customer photos can always be hidden.
+
+That standard-node statement applies to `A0` and the native-node portion of `A1`. `A2` may require a separately packaged custom implementation and therefore remains offline until its exact code, model and execution environment are pinned.
 
 ## Track B: profile-aware dual-view sampler
 
@@ -121,6 +135,8 @@ ReflectCupCandidateRank
 At each denoising step the sampler predicts clean images for the natural plate branch and reflected target branch, decodes them, uses LPW to reconcile their spatial frequency bands in plate space, re-encodes the merged result and preserves the VAE residual. The final 10–25% of steps should favour the plate branch's high-frequency texture while retaining the reflected branch's low/mid-frequency identity.
 
 LookingGlass primarily demonstrates prompt-to-prompt paired views. Adding a fixed uploaded-image target is a ReflectCup extension, informed by Diffusion Illusions' dream-target loss. It requires original engineering and must not be described as a ready-made ComfyUI workflow.
+
+[Snellcaster / Refracting Reality, CVPR 2026](https://openaccess.thecvf.com/content/CVPR2026/html/Yin_Refracting_Reality_Generating_Images_with_Realistic_Transparent_Objects_CVPR_2026_paper.html) is a second implementation reference for Track B, not a substitute for LookingGlass. It synchronizes clean-image estimates through a physical ray warp, uses occlusion-masked blending, Laplacian pyramid warping, detail-preserving averaging (DPA) and time travel. Its task is generating physically plausible transparent objects rather than hiding a fixed image in a cup reflection, but its core-mask handling and DPA ablation are directly relevant to reducing boundary blur and detail loss in ReflectCup's valid reflective sheet.
 
 ## Role of LoRA and future training
 
@@ -182,9 +198,21 @@ Approximate compute targets taken from primary implementations:
 
 ## Delivery stages
 
-1. Implement Track A workflow, eight/sixteen-seed ranking and an internal result board.
+1. Implement the `A0`/`A1`/`A2` Track A comparison, eight/sixteen-seed ranking and an internal result board; start with the content-pinned `A1` fast workflow while retaining `A0` as a baseline and `A2` as an offline arm.
 2. Add the differentiable `R_profile` and CPU/browser parity tests.
 3. Implement LPW and reproduce a paper-style cylindrical benchmark.
 4. Add the fixed-image reflected branch and leakage/print losses.
 5. Compare QR Monster, T2I-Adapter, LPW dual-view and a small Diffusion Illusions baseline on the same portrait, text and natural-image set.
 6. Print calibration coupons and sample plates before setting customer promises.
+
+## Provisional internal Track A scaffold
+
+The 2026-07-20 code is a defensive planning scaffold, not a runnable Track A implementation. It establishes server-oriented contracts without enabling AI generation:
+
+- `src/domains/ai/contracts.ts` defines the versioned `AIStyleProvider`, versioned `ComfyExecutor`, private asset references and optical scorer boundary. A provider-produced submission is rejected unless its provider id/version/experiment arm, complete workflow record (models, controls and custom-node commits), prompts, numeric/boolean bindings, seed plan, private asset hashes and optical profile all exactly match the validated request and provider declaration. The provider remains deliberately separate from the deterministic `src/rendering/styles/StyleProvider`; it cannot mutate a session or production image.
+- `src/domains/ai/records.ts` strictly validates versioned Comfy workflow provenance and provisional AI job manifests. The manifest includes an idempotency hash, executor-bound remote handle, lifecycle state, candidate artifact hashes, measured metrics, metric-scorer id/version and acceptance-threshold id/version. Lifecycle invariants reject impossible planned/queued/running/succeeded/failed combinations. Free-form string bindings are deliberately unsupported: generation parameters may contain only finite numbers or booleans, and credential, URL, header, cookie and generic `value`-shaped keys are rejected. Sampler/model names belong in the content-pinned workflow or a future identifier enum, not arbitrary record values.
+- `src/domains/ai/target-preparation.ts` is exposed only through the explicit, `server-only`-guarded `@/domains/ai/server` barrel because it depends on Node crypto and Sharp; the shared barrel does not export it. It provides provisional `tonal`, `contour` and `hybrid` preparation, composites transparency over white, constrains the longest side to 768 px by default, quantises luminance to 4–6 bands and restricts contour width to the audited 1/3/5 px kernels. It snapshots and hashes caller-owned input bytes before its first asynchronous operation. Prepared target pixels remain private and every public image access returns a new copy, so later caller mutation cannot alter the authoritative hash or bytes.
+- `src/domains/ai/candidate-scoring.ts` encodes provisional digital gates and deterministic ranking. Each evaluation carries the metric scorer and threshold-policy identity/version alongside MS-SSIM, Edge F1, LPIPS, prompt-alignment ratio and reflection-versus-plate feature gap. It does not calculate these model-dependent metrics; exact OCR remains an explicit per-request gate.
+- `src/domains/ai/policy.ts` hard-codes `customerControlsEnabled`, `executionEnabled` and `networkExecutionEnabled` to `false`. `DISABLED_COMFY_EXECUTOR` rejects submit, inspect and cancel. There is no route, database migration, provider URL, external request, API key or customer UI in this stage.
+
+This scaffold does not prove visual quality, provider compatibility, metric validity, latency or commercial readiness. Before execution can be enabled, the project still needs a licensed checkpoint/model inventory, a content-bound Comfy API workflow, server-side secret injection, private input/output transfer, durable queue/lease integration, deletion/retention handling, the authoritative target-to-plate condition builder with neutral surround, real scorer implementations and an admin-only experiment board. Only after those gates pass should a separately reviewed adapter replace the disabled executor.

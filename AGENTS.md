@@ -27,7 +27,7 @@ ReflectCup Studio turns a customer image into a printable plate pattern and prev
 - The browser may render interactively, but saved previews and production files are generated authoritatively on the server.
 - Customer originals, tokens, databases, generated production files and real calibration profiles are private and never committed.
 - `private/legacy-2025-poc` is local research evidence, not a runtime dependency.
-- Concept frames are references, not 360° backgrounds. GLB/KTX2/lightmap assets must not be claimed until that staged pipeline exists.
+- Concept frames are references, not 360° backgrounds. Only files pinned in the scene release manifest are shipped; do not claim KTX2 or geometry-matched UV2/full-scene lightmaps until those pipelines and assets actually exist.
 - The non-AI style lab is internal; no AI, style or checkout control is shown before its production provider is enabled.
 
 ## Commands

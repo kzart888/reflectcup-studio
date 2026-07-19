@@ -50,6 +50,7 @@ import { ADMIN_COOKIE_NAME, MAX_UPLOAD_BYTES } from "@/lib/constants";
 import { createNominalOpticalProfile, generateOpticalProfile } from "@/optics";
 import { findAsset, readAssetPreviewMetadata } from "@/repositories/assets";
 import { ADMIN_LOGIN_LIMITS } from "@/repositories/admin";
+import { LEGACY_SCENE_V4_RELEASES } from "@/scenes/release-manifest";
 import { getStorage } from "@/storage/filesystem-storage";
 import { enqueueStorageDeletions, processStorageDeletionOutbox } from "@/storage/deletion-outbox";
 
@@ -529,14 +530,26 @@ describe("backend customer flow", () => {
       { params: Promise.resolve({ id: sessionId }) }
     );
     expect(saved.status).toBe(200);
-    expect((await saved.json()).data.session).toMatchObject({ revision: 1, sceneId: "forest-camp-evening" });
+    const currentForest = findPublishedScene("forest-camp-evening")!;
+    expect(currentForest.version).toBe(5);
+    expect((await saved.json()).data.session).toMatchObject({
+      revision: 1,
+      sceneId: "forest-camp-evening",
+      sceneVersion: 5,
+      sceneChecksum: currentForest.checksum
+    });
 
     const refreshed = await getSessionRoute(
       new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, { headers: sessionHeaders }),
       { params: Promise.resolve({ id: sessionId }) }
     );
     expect(refreshed.status).toBe(200);
-    expect((await refreshed.json()).data.session).toMatchObject({ revision: 1, sceneId: "forest-camp-evening" });
+    expect((await refreshed.json()).data.session).toMatchObject({
+      revision: 1,
+      sceneId: "forest-camp-evening",
+      sceneVersion: 5,
+      sceneChecksum: currentForest.checksum
+    });
 
     const invalid = await patchSessionRoute(
       new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, {
@@ -583,6 +596,31 @@ describe("backend customer flow", () => {
       sceneChecksum: publishedScene.checksum
     });
     expect(confirmed.snapshot.checksum).toMatch(/^[0-9a-f]{64}$/);
+
+    // Emulate a session confirmed while forest v4 was current. Reopening must
+    // return the immutable snapshot provenance, not today's forest v5 release.
+    const forestV4 = LEGACY_SCENE_V4_RELEASES[1];
+    const forestV4Design = {
+      ...confirmed.snapshot.design,
+      sceneId: forestV4.id,
+      sceneVersion: forestV4.version,
+      sceneChecksum: forestV4.checksum
+    };
+    await getDatabase()
+      .update(designSnapshots)
+      .set({ design: forestV4Design, checksum: sha256(stableJson(forestV4Design)) })
+      .where(eq(designSnapshots.id, confirmed.snapshot.id));
+    const reopened = await getSessionRoute(
+      new NextRequest(`${origin}/api/v1/preview-sessions/${sessionId}`, { headers: sessionHeaders }),
+      { params: Promise.resolve({ id: sessionId }) }
+    );
+    expect(reopened.status).toBe(200);
+    expect((await reopened.json()).data.session).toMatchObject({
+      status: "confirmed",
+      sceneId: forestV4.id,
+      sceneVersion: 4,
+      sceneChecksum: forestV4.checksum
+    });
     const productionJob = await queueProductionBundle(confirmed.snapshot.id, testAdminId);
     expect(productionJob.input).toEqual({ size: 4096, actorAdminUserId: testAdminId });
   });

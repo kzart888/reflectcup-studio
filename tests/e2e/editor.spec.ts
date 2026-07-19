@@ -2,6 +2,7 @@ import { expect, test, type Page, type Route } from "@playwright/test";
 import sharp from "sharp";
 import type { PreviewSession } from "../../src/lib/contracts";
 import { createNominalOpticalProfile } from "../../src/optics";
+import { findSceneRelease } from "../../src/scenes/release-manifest";
 
 const png = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAD0lEQVR42mNk+M9QzwAEYgH9fI2bWQAAAABJRU5ErkJggg==",
@@ -11,6 +12,7 @@ const png = Buffer.from(
 function baseSession(id = "session_demo_1234"): PreviewSession {
   const now = new Date().toISOString();
   const profile = createNominalOpticalProfile({ status: "published" });
+  const scene = findSceneRelease("studio-neutral")!;
   return {
     id,
     status: "draft" as const,
@@ -26,6 +28,8 @@ function baseSession(id = "session_demo_1234"): PreviewSession {
     },
     previewSettings: { toneMappingExposure: 1.08, mobileDprCap: 1.5, desktopDprCap: 2, keyLightMultiplier: 1 },
     sceneId: "studio-neutral",
+    sceneVersion: scene.version,
+    sceneChecksum: scene.checksum,
     crop: { centerX: 0.5, centerY: 0.5, scale: 1 },
     camera: { position: [0.6, 0.48, 0], target: [-0.03, 0.043, 0] },
     styleStrategy: "identity",
@@ -102,7 +106,13 @@ async function mockStudio(page: Page, options: {
     if (method === "PATCH") {
       const body = request.postDataJSON();
       patches.push(body);
-      session = { ...session, ...body, revision: session.revision + 1 };
+      const nextScene = typeof body.sceneId === "string" ? findSceneRelease(body.sceneId) : undefined;
+      session = {
+        ...session,
+        ...body,
+        ...(nextScene ? { sceneVersion: nextScene.version, sceneChecksum: nextScene.checksum } : {}),
+        revision: session.revision + 1,
+      };
       const responseSession = session;
       if (options.delayFirstPatchResponse && patches.length === 1) {
         markFirstPatchStarted?.();

@@ -11,10 +11,10 @@ export async function GET(request: NextRequest) {
   try {
     await authenticateAdmin(request);
     const rows = await listPreviewSessions(100);
-    const [serialized, latestSnapshots] = await Promise.all([
-      Promise.all(rows.map(serializeAdminSession)),
-      findLatestSnapshotsForSessions(rows.map((row) => row.id))
-    ]);
+    const latestSnapshots = await findLatestSnapshotsForSessions(rows.map((row) => row.id));
+    const serialized = await Promise.all(rows.map((row) => (
+      serializeAdminSession(row, latestSnapshots.get(row.id) ?? null)
+    )));
     return dataResponse({
       sessions: serialized.map((session) => {
         const snapshot = latestSnapshots.get(session.id);
