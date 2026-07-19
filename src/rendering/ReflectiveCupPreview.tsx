@@ -15,6 +15,7 @@ import { createDishGeometry, createDishSolidGeometry } from "@/rendering/dish-ge
 import { cupFragmentShader, opticalVertexShader, plateFragmentShader } from "@/rendering/shaders";
 import { CUSTOMER_SCENES, getSceneDescriptor, type SceneDescriptor } from "@/scenes/catalog";
 import { SceneBackdrop } from "@/scenes/SceneBackdrop";
+import { PREVIEW_CAMERA_FAR_METRES } from "@/scenes/layout";
 import { browserSceneRuntimeHints, initialSceneQuality } from "@/scenes/runtime-policy";
 
 type Props = {
@@ -669,7 +670,7 @@ export function ReflectiveCupPreview(props: Props) {
       <Canvas
       frameloop="demand"
       dpr={[1, maxDpr]}
-      camera={{ position: [...props.cameraState.position], fov: props.opticalRuntime.profile.designCamera.verticalFovDegrees, near: 0.02, far: 3 }}
+      camera={{ position: [...props.cameraState.position], fov: props.opticalRuntime.profile.designCamera.verticalFovDegrees, near: 0.02, far: PREVIEW_CAMERA_FAR_METRES }}
       gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
       onCreated={({ gl }) => {
         gl.outputColorSpace = THREE.SRGBColorSpace;

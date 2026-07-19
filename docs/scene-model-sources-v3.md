@@ -1,6 +1,6 @@
 # Scene model sources v3
 
-This inventory covers the model payload published by the current `warm-craftsman-home` v3 and `forest-camp-evening` v3 scene descriptors. It records model provenance and conversion only; the current fixed-subject shadow/AO layers are documented separately in `baked-lighting-v3.md`. It does not claim that KTX2 textures, geometry-matched UV2 full-scene lightmaps or same-authored-scene panoramas exist.
+This inventory covers the immutable model payload originally published by `warm-craftsman-home` v3 and `forest-camp-evening` v3 and reused byte-for-byte by the current v4 compositions. It records model provenance and conversion only; the fixed-subject shadow/AO payload is documented separately in `baked-lighting-v3.md`, while v4 placement/background changes are documented in `scene-assets.md`. It does not claim that KTX2 textures, geometry-matched UV2 full-scene lightmaps or same-authored-scene panoramas exist.
 
 ## License and provenance
 
@@ -43,7 +43,7 @@ These variants reuse the exact High/Medium geometry, node transforms, dimensions
 | `outdoor-table-chair-set-01-low.glb` | `outdoor-table-chair-set-01.glb` | 9,828 | 512 px | 501,252 (0.478 MiB) | ≤0.60 MiB | `d28edb5ffcdcb05382f998686f67e24c8f59d136af05b94de2a2b8d881e3084c` |
 | `lantern-01-low.glb` | `lantern-01.glb` | 33,902 | 480 px | 867,708 (0.828 MiB) | ≤896,748 B | `60df83c65b8368ddb49e5a898caaf8a053a33f3c8e4909820454c4fb91f02639` |
 
-The resulting Low model payload is **656,860 bytes (0.63 MiB)** for the indoor trio and **1,388,404 bytes (1.32 MiB)** for the outdoor trio. With the current 1K environment, Cycles table projection and profile contact AO included once, the published Low totals are 2,386,693 bytes for home and 3,383,267 bytes for forest, both below the 4,000,000-byte initial-scene target. Low uses 512 px derivatives for the home table, sofa and plant, and for the camp table set; the lantern uses a 480 px derivative.
+The resulting Low model payload is **656,860 bytes (0.63 MiB)** for the indoor trio and **1,388,404 bytes (1.32 MiB)** for the outdoor trio. In the current v4 catalog, adding the 1K environment, Cycles table projection and profile contact AO once gives 3,383,267 bytes for forest; home additionally binds 745,086 bytes of reused v2 oak floor maps, bringing its Low total to 3,131,779 bytes. Both remain below the 4,000,000-byte initial-scene target. Low uses 512 px derivatives for the home table, sofa and plant, and for the camp table set; the lantern uses a 480 px derivative.
 
 ## Reproducible conversion
 

@@ -9,6 +9,15 @@ import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.j
 
 import type { SceneQuality } from "@/lib/contracts";
 import type { SceneDescriptor } from "@/scenes/catalog";
+import {
+  CAMP_FLOOR_Y,
+  CAMP_SCENE_LAYOUT,
+  HOME_FLOOR_Y,
+  HOME_SCENE_LAYOUT,
+  LEGACY_CAMP_SCENE_LAYOUT_V3,
+  LEGACY_HOME_SCENE_LAYOUT_V3,
+  TABLE_TOP_Y,
+} from "@/scenes/layout";
 
 type SceneBackdropProps = {
   descriptor: SceneDescriptor;
@@ -25,15 +34,6 @@ type SceneModelProps = {
   materialTint?: string;
   roughnessFloor?: number;
 };
-
-const TABLE_TOP_Y = -0.0028;
-const HOME_TABLE_Y_SCALE = 1.32;
-const HOME_FLOOR_Y = TABLE_TOP_Y - 0.54885 * HOME_TABLE_Y_SCALE;
-// Measured from the published GLB with the two chair nodes excluded.  The
-// previous 0.725922 m estimate left the highest slats 6.09 mm too high and
-// visibly intersecting the 2 mm saucer bottom.
-const CAMP_TABLE_HEIGHT = 0.732011735;
-const CAMP_FLOOR_Y = TABLE_TOP_Y - CAMP_TABLE_HEIGHT;
 
 const MATERIAL_TEXTURE_KEYS = [
   "map",
@@ -244,16 +244,110 @@ function LoadingTable({ color }: { color: string }) {
   );
 }
 
+function useOwnedSurfaceTextures(urls: readonly string[], repeat: readonly [number, number]) {
+  const sources = useLoader(THREE.TextureLoader, [...urls]);
+  const textures = useMemo(() => sources.map((source, index) => {
+    const texture = source.clone();
+    texture.colorSpace = index === 0 ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(repeat[0], repeat[1]);
+    texture.anisotropy = Math.max(4, texture.anisotropy);
+    texture.needsUpdate = true;
+    return texture;
+  }), [repeat, sources]);
+  useEffect(() => () => textures.forEach((texture) => texture.dispose()), [textures]);
+  return textures;
+}
+
+function HomeRoomShell({ descriptor }: { descriptor: SceneDescriptor }) {
+  const textureUrls = [
+    descriptor.assetUrls["room-floor-color"],
+    descriptor.assetUrls["room-floor-normal"],
+    descriptor.assetUrls["room-floor-roughness"],
+  ] as const;
+  const repeat = useMemo(() => [5, 5] as const, []);
+  const [colorMap, normalMap, roughnessMap] = useOwnedSurfaceTextures(textureUrls, repeat);
+  const wallY = HOME_FLOOR_Y + 1.42;
+  const trimY = HOME_FLOOR_Y + 0.74;
+  return (
+    <group name="large-craftsman-room-shell">
+      <mesh name="room-oak-floor" position={[0, HOME_FLOOR_Y - 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[6.2, 5.8]} />
+        <meshStandardMaterial
+          map={colorMap}
+          normalMap={normalMap}
+          normalScale={new THREE.Vector2(0.42, 0.42)}
+          roughnessMap={roughnessMap}
+          roughness={0.78}
+          metalness={0}
+          envMapIntensity={0.48}
+        />
+      </mesh>
+      <mesh name="room-back-wall" position={[-2.95, wallY, 0]}>
+        <boxGeometry args={[0.08, 2.85, 5.8]} />
+        <meshStandardMaterial color="#e7dfd1" roughness={0.9} envMapIntensity={0.2} />
+      </mesh>
+      <mesh name="room-front-wall" position={[2.95, wallY, 0]}>
+        <boxGeometry args={[0.08, 2.85, 5.8]} />
+        <meshStandardMaterial color="#ded3c3" roughness={0.92} envMapIntensity={0.18} />
+      </mesh>
+      <mesh name="room-left-wall" position={[0, wallY, -2.86]}>
+        <boxGeometry args={[5.9, 2.85, 0.08]} />
+        <meshStandardMaterial color="#eee7da" roughness={0.92} envMapIntensity={0.2} />
+      </mesh>
+      <mesh name="room-right-wall" position={[0, wallY, 2.86]}>
+        <boxGeometry args={[5.9, 2.85, 0.08]} />
+        <meshStandardMaterial color="#e2d7c7" roughness={0.92} envMapIntensity={0.18} />
+      </mesh>
+      <mesh name="room-ceiling" position={[0, HOME_FLOOR_Y + 2.84, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[6.2, 5.8]} />
+        <meshStandardMaterial color="#eee8dc" roughness={0.94} envMapIntensity={0.14} side={THREE.DoubleSide} />
+      </mesh>
+      {[-1.75, 0, 1.75].map((z) => (
+        <mesh key={z} name="craftsman-window" position={[-2.902, HOME_FLOOR_Y + 1.64, z]} rotation={[0, Math.PI / 2, 0]}>
+          <planeGeometry args={[0.82, 1.28]} />
+          <meshStandardMaterial color="#9fb2b6" emissive="#b9c8c7" emissiveIntensity={0.22} roughness={0.34} metalness={0.02} />
+        </mesh>
+      ))}
+      {[-2.1, -1.05, 0, 1.05, 2.1].map((z) => (
+        <mesh key={z} name="craftsman-wall-stile" position={[-2.885, trimY, z]}>
+          <boxGeometry args={[0.035, 0.72, 0.045]} />
+          <meshStandardMaterial color="#f3ecdf" roughness={0.82} />
+        </mesh>
+      ))}
+      <mesh name="craftsman-chair-rail" position={[-2.88, HOME_FLOOR_Y + 1.08, 0]}>
+        <boxGeometry args={[0.04, 0.055, 5.5]} />
+        <meshStandardMaterial color="#f5ede0" roughness={0.8} />
+      </mesh>
+    </group>
+  );
+}
+
+function ForestContextGeometry() {
+  return (
+    <group name="wide-forest-context">
+      <mesh name="forest-earth-ground" position={[-0.2, CAMP_FLOOR_Y - 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[3.6, 6]} />
+        <meshStandardMaterial color="#2b2b24" roughness={1} metalness={0} envMapIntensity={0.16} />
+      </mesh>
+    </group>
+  );
+}
+
 function HomeScene({ descriptor, quality }: SceneBackdropProps) {
   const models = descriptor.qualityAssets[quality].models;
+  const layout = descriptor.version >= 4 ? HOME_SCENE_LAYOUT : LEGACY_HOME_SCENE_LAYOUT_V3;
   return (
-    <group name="warm-craftsman-home-v3">
+    <group name={`warm-craftsman-home-v${descriptor.version}`}>
+      {descriptor.version >= 4 ? <HomeRoomShell descriptor={descriptor} /> : null}
       <Suspense fallback={<LoadingTable color="#b37b45" />}>
         <SceneModel
           url={models.table}
           name="cc0-wooden-table"
-          position={[0, HOME_FLOOR_Y, 0]}
-          scale={[1, HOME_TABLE_Y_SCALE, 1]}
+          position={layout.table.position}
+          rotation={layout.table.rotation}
+          scale={layout.table.scale}
           materialTint="#e3edf9"
           roughnessFloor={0.56}
         />
@@ -262,18 +356,18 @@ function HomeScene({ descriptor, quality }: SceneBackdropProps) {
         <SceneModel
           url={models.sofa}
           name="cc0-sofa"
-          position={[-1.5, -0.38, -0.8]}
-          rotation={[0, -Math.PI / 2, 0]}
-          scale={0.55}
+          position={layout.sofa.position}
+          rotation={layout.sofa.rotation}
+          scale={layout.sofa.scale}
         />
       </Suspense>
       <Suspense fallback={null}>
         <SceneModel
           url={models.plant}
           name="cc0-potted-plant"
-          position={[-1.1, -0.1, 0.85]}
-          rotation={[0, 0.45, 0]}
-          scale={0.55}
+          position={layout.plant.position}
+          rotation={layout.plant.rotation}
+          scale={layout.plant.scale}
         />
       </Suspense>
       <BakedGroundOcclusion descriptor={descriptor} y={HOME_FLOOR_Y} />
@@ -283,18 +377,18 @@ function HomeScene({ descriptor, quality }: SceneBackdropProps) {
 
 function CampScene({ descriptor, quality }: SceneBackdropProps) {
   const models = descriptor.qualityAssets[quality].models;
+  const legacyLayout = descriptor.version < 4;
+  const layout = legacyLayout ? LEGACY_CAMP_SCENE_LAYOUT_V3 : CAMP_SCENE_LAYOUT;
   return (
-    <group name="forest-camp-evening-v3">
+    <group name={`forest-camp-evening-v${descriptor.version}`}>
+      {descriptor.version >= 4 ? <ForestContextGeometry /> : null}
       <Suspense fallback={<LoadingTable color="#674a39" />}>
         <SceneModel
           url={models.tableSet}
           name="cc0-outdoor-table-chair-set"
-          position={[0.0797, CAMP_FLOOR_Y, -0.0711]}
-          rotation={[0, -0.08, 0]}
-          hiddenNodeNames={[
-            "outdoor_table_chair_set_01_chair_01",
-            "outdoor_table_chair_set_01_chair_02",
-          ]}
+          position={layout.tableSet.position}
+          rotation={layout.tableSet.rotation}
+          hiddenNodeNames={LEGACY_CAMP_SCENE_LAYOUT_V3.tableSet.hiddenNodeNames}
           materialTint="#735f53"
           roughnessFloor={0.5}
         />
@@ -303,10 +397,10 @@ function CampScene({ descriptor, quality }: SceneBackdropProps) {
         <SceneModel
           url={models.tent}
           name="cc0-kenney-tent"
-          position={[-1.78, CAMP_FLOOR_Y, -1.34]}
-          rotation={[0, 0.34, 0]}
-          scale={0.28}
-          materialTint="#596052"
+          position={layout.tent.position}
+          rotation={layout.tent.rotation}
+          scale={layout.tent.scale}
+          materialTint="#b9b69b"
           roughnessFloor={0.78}
         />
       </Suspense>
@@ -314,9 +408,9 @@ function CampScene({ descriptor, quality }: SceneBackdropProps) {
         <SceneModel
           url={models.lantern}
           name="cc0-lantern"
-          position={[-0.18, TABLE_TOP_Y, 0.24]}
-          rotation={[0, -0.2, 0]}
-          scale={0.4}
+          position={layout.lantern.position}
+          rotation={layout.lantern.rotation}
+          scale={layout.lantern.scale}
         />
       </Suspense>
       <BakedGroundOcclusion descriptor={descriptor} y={CAMP_FLOOR_Y} />

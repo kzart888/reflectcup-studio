@@ -3,6 +3,8 @@
 Date: 2026-07-19
 Scope: `warm-craftsman-home` v3, `forest-camp-evening` v3, unchanged `studio-neutral` v2, and the internal non-AI style review.
 
+Historical record: this page freezes the v3 release review. The current home/forest v4 composition and its remaining limits are documented in [`scene-assets.md`](scene-assets.md); this file must not be read as the current scene catalog.
+
 This is a digital-preview QA record. It does not certify physical cup-and-plate WYSIWYG.
 
 ## Art-direction references

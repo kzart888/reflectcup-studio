@@ -13,11 +13,11 @@ Implemented:
 - immutable nominal-v1 and curved-cup-v2 regression profiles plus the current curved-cup-v3 digital profile; a fresh seed selects v3 for new sessions;
 - a curved mirror cup with ceramic inner wall/base/handle and a solid ceramic dish display model;
 - vector reflection-area highlighting based on the v3 reversible core region, with the false top island removed;
-- selected warm Craftsman interior option 1 (the new-session default), forest camp option 2, and a neutral optical studio;
+- selected warm Craftsman interior option 1 and forest camp option 2 as current v4 scene compositions (with the home still the new-session default), plus the neutral optical studio v2;
 - identity mapped style, transparent unmapped fill, design sessions, administrator access and a test production bundle;
 - an internal non-AI style comparison lab that is not connected to customer saves or exports.
 
-Not implemented: AI disguise/styling, customer-facing deterministic styles, automatic background fill, Shopify deposit/full payment, fulfilment and customer accounts. The v3 home/forest scenes now use CC0-derived GLB/Meshopt models with embedded PBR inputs and Blender/Cycles fixed-subject shadow/contact layers. The complete target environment pipeline is still unfinished: KTX2 delivery, geometry-matched UV2 full-scene direct/indirect/AO lighting, and a same-authored-scene 360° panorama/HDR are not shipped. Disabled capabilities are not displayed.
+Not implemented: AI disguise/styling, customer-facing deterministic styles, automatic background fill, Shopify deposit/full payment, fulfilment and customer accounts. The staged AI direction is specified in `ai-hidden-image-roadmap.md`; no AI control is shown until its provider, optical ranking and privacy gates are enabled. The current home/forest v4 scenes reuse CC0-derived GLB/Meshopt models with embedded PBR inputs and Blender/Cycles fixed-subject shadow/contact layers. Home renders an explicit room shell with its HDR reserved for PMREM; forest uses a matte near-ground receiver in front of its visible distant HDR. The complete target environment pipeline is still unfinished: KTX2 delivery, geometry-matched UV2 full-scene direct/indirect/AO lighting, and a same-authored-scene 360° panorama/HDR are not shipped. Disabled capabilities are not displayed.
 
 Scene selection is presentation-only. It autosaves with the same revision lock as crop/camera and its ID/version/checksum are frozen into confirmation, but it cannot alter optical mapping, canonical render or the production PNG.
 

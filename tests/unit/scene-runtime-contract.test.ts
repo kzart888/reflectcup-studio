@@ -61,6 +61,36 @@ describe("scene runtime quality contract", () => {
     expect(backdrop).toContain("material.aoMapIntensity = 0.82");
   });
 
+  it("ships the v4 context shells without exposing the near-wall home panorama", () => {
+    const backdrop = readFileSync("src/scenes/SceneBackdrop.tsx", "utf8");
+    const home = SCENE_RELEASES.find((release) => release.id === "warm-craftsman-home")!;
+    const forest = SCENE_RELEASES.find((release) => release.id === "forest-camp-evening")!;
+
+    expect(home).toMatchObject({
+      version: 4,
+      visual: { background: { mode: "solid" } },
+      renderContract: { geometryVersion: "cc0-game-ready-layout-v4" },
+    });
+    expect(home.qualityAssets.low.textureKeys).toEqual([
+      "room-floor-color",
+      "room-floor-normal",
+      "room-floor-roughness",
+    ]);
+    expect(forest).toMatchObject({
+      version: 4,
+      visual: { background: { mode: "environment", blur: 0 } },
+      renderContract: { geometryVersion: "cc0-game-ready-context-v4" },
+    });
+    expect(forest.qualityAssets.low.textureKeys).toEqual([]);
+    expect(forest.qualityAssets.medium.textureKeys).toEqual([]);
+    expect(backdrop).toContain('name="large-craftsman-room-shell"');
+    expect(backdrop).toContain('name="wide-forest-context"');
+    expect(backdrop).toContain('name="room-oak-floor"');
+    expect(backdrop).toContain('name="forest-earth-ground"');
+    expect(backdrop).not.toContain('name="forest-midground-trunk"');
+    expect(backdrop).not.toContain('name="forest-moss-patch"');
+  });
+
   it("applies the baked cup contact AO only to its matching optical profile", () => {
     const preview = readFileSync("src/rendering/ReflectiveCupPreview.tsx", "utf8");
 

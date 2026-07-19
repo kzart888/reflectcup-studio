@@ -343,8 +343,7 @@ const curvedCupV3ContactAo: SceneAssetFile = {
   sha256: "38c8f6a435ec49dd22a25cc130a9ccbd12f153148b433120f5c0086547e8ebd4",
 };
 
-export const SCENE_RELEASES = [
-  LEGACY_SCENE_V2_RELEASES[0],
+export const LEGACY_SCENE_V3_RELEASES = [
   {
     id: "warm-craftsman-home",
     version: 3,
@@ -545,6 +544,80 @@ export const SCENE_RELEASES = [
       rendererVersion: "reflective-subject-glsl3-v3",
       environmentPipelineVersion: "equirectangular-pmrem-idle-lru-v2",
       shadowPipelineVersion: "cycles-planar-decal-v3",
+    },
+  },
+] as const satisfies readonly SceneRelease[];
+
+export const SCENE_RELEASES = [
+  LEGACY_SCENE_V2_RELEASES[0],
+  {
+    ...LEGACY_SCENE_V3_RELEASES[0],
+    version: 4,
+    checksum: "ee834113e1febd642ae02d0f135f3652d9e962ed437d40ef189d4af16a59079e",
+    assets: [
+      ...LEGACY_SCENE_V3_RELEASES[0].assets,
+      {
+        key: "room-floor-color",
+        url: "/scenes/warm-craftsman-home/v2/textures/oak-color.jpg",
+        bytes: 336_305,
+        sha256: "d171f45ef01bc6e239b00dfaa4961bcd27f7d8e93e3962da3bd3d0ce703d802c",
+      },
+      {
+        key: "room-floor-normal",
+        url: "/scenes/warm-craftsman-home/v2/textures/oak-normal.jpg",
+        bytes: 193_626,
+        sha256: "ba95eadc009818e161d0f753191f1bacc3fc861e593be0bc6d82b437f9ec8044",
+      },
+      {
+        key: "room-floor-roughness",
+        url: "/scenes/warm-craftsman-home/v2/textures/oak-roughness.jpg",
+        bytes: 215_155,
+        sha256: "f281f682e62fe322303dfeaa13dac18b5cb9e113617fe0aca43605b49161d82b",
+      },
+    ],
+    qualityAssets: {
+      low: {
+        ...LEGACY_SCENE_V3_RELEASES[0].qualityAssets.low,
+        textureKeys: ["room-floor-color", "room-floor-normal", "room-floor-roughness"],
+      },
+      medium: {
+        ...LEGACY_SCENE_V3_RELEASES[0].qualityAssets.medium,
+        textureKeys: ["room-floor-color", "room-floor-normal", "room-floor-roughness"],
+      },
+      high: {
+        ...LEGACY_SCENE_V3_RELEASES[0].qualityAssets.high,
+        textureKeys: ["room-floor-color", "room-floor-normal", "room-floor-roughness"],
+      },
+    },
+    visual: {
+      ...LEGACY_SCENE_V3_RELEASES[0].visual,
+      background: {
+        ...LEGACY_SCENE_V3_RELEASES[0].visual.background,
+        mode: "solid",
+        color: "#b9ab98",
+        blur: 0,
+        intensity: 1,
+      },
+    },
+    renderContract: {
+      ...LEGACY_SCENE_V3_RELEASES[0].renderContract,
+      geometryVersion: "cc0-game-ready-layout-v4",
+    },
+  },
+  {
+    ...LEGACY_SCENE_V3_RELEASES[1],
+    version: 4,
+    checksum: "457ae5440ee49a4bdcf597c656b92c26f7350f67e85e739fb86621fb2a40ecb5",
+    visual: {
+      ...LEGACY_SCENE_V3_RELEASES[1].visual,
+      background: {
+        ...LEGACY_SCENE_V3_RELEASES[1].visual.background,
+        blur: 0,
+      },
+    },
+    renderContract: {
+      ...LEGACY_SCENE_V3_RELEASES[1].renderContract,
+      geometryVersion: "cc0-game-ready-context-v4",
     },
   },
 ] as const satisfies readonly SceneRelease[];

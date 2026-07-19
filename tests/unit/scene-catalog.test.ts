@@ -15,14 +15,15 @@ import { CUSTOMER_SCENES, getSceneDescriptor } from "@/scenes/catalog";
 import {
   LEGACY_SCENE_V1_IDENTITIES,
   LEGACY_SCENE_V2_RELEASES,
+  LEGACY_SCENE_V3_RELEASES,
   SCENE_RELEASES,
   serializeSceneReleaseForChecksum,
 } from "@/scenes/release-manifest";
 
 const EXPECTED_RELEASES = {
   "studio-neutral": "b2284d246bab7eecab47690467374eca132330bf95f7aee7d5c01ec927df5616",
-  "warm-craftsman-home": "ab9717f5abfa2796ac33d9abcc3b101b6dc9ecd1adddbfa41afada346b687b5e",
-  "forest-camp-evening": "452639f3e3cf9d5723d9399799d783710a314ffa635cd07b5b9fbbc6ee10189c",
+  "warm-craftsman-home": "ee834113e1febd642ae02d0f135f3652d9e962ed437d40ef189d4af16a59079e",
+  "forest-camp-evening": "457ae5440ee49a4bdcf597c656b92c26f7350f67e85e739fb86621fb2a40ecb5",
 } as const;
 
 describe("published scene catalog", () => {
@@ -34,7 +35,7 @@ describe("published scene catalog", () => {
     ]);
     expect(DEFAULT_SCENE_ID).toBe("warm-craftsman-home");
     expect(PUBLISHED_SCENES).toHaveLength(3);
-    const expectedVersions = { "studio-neutral": 2, "warm-craftsman-home": 3, "forest-camp-evening": 3 } as const;
+    const expectedVersions = { "studio-neutral": 2, "warm-craftsman-home": 4, "forest-camp-evening": 4 } as const;
     for (const scene of PUBLISHED_SCENES) {
       expect(scene).toMatchObject({ version: expectedVersions[scene.id], status: "published" });
       expect(scene.checksum).toMatch(/^[0-9a-f]{64}$/);
@@ -62,6 +63,10 @@ describe("published scene catalog", () => {
       { id: "studio-neutral", version: 2, checksum: "b2284d246bab7eecab47690467374eca132330bf95f7aee7d5c01ec927df5616" },
       { id: "warm-craftsman-home", version: 2, checksum: "db0c979d798ab55cd6c5b663812efb395ca15789dea5fcc5b6c68f6945fc7f16" },
       { id: "forest-camp-evening", version: 2, checksum: "04e18b82607a8b2d44c68b2b44d305964ac2754a53bf17447157ac321b235183" },
+    ]);
+    expect(LEGACY_SCENE_V3_RELEASES.map(({ id, version, checksum }) => ({ id, version, checksum }))).toEqual([
+      { id: "warm-craftsman-home", version: 3, checksum: "ab9717f5abfa2796ac33d9abcc3b101b6dc9ecd1adddbfa41afada346b687b5e" },
+      { id: "forest-camp-evening", version: 3, checksum: "452639f3e3cf9d5723d9399799d783710a314ffa635cd07b5b9fbbc6ee10189c" },
     ]);
   });
 
@@ -96,7 +101,10 @@ describe("published scene catalog", () => {
         } else if (asset.key === "cup-contact-ao") {
           expect(asset.url).toContain(asset.sha256.slice(0, 16));
         } else {
-          expect(asset.url).toContain(`/v${release.version}/`);
+          // A code-only scene composition release may reuse immutable assets
+          // from an earlier content path. The release checksum still binds the
+          // exact URL, bytes and hash.
+          expect(asset.url).toMatch(/^\/scenes\/[^/]+\/v\d+\//);
         }
         const filename = path.resolve("public", asset.url.slice(1));
         const contents = readFileSync(filename);

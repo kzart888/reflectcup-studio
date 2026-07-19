@@ -1,6 +1,6 @@
 # Scene asset release manifest
 
-Generated for the 2026-07-19 v3 scene pass. This document lists the files referenced by the **current** customer catalog: home v3, forest v3 and studio v2. The authoritative executable manifest is `src/scenes/release-manifest.ts`; tests independently verify every listed byte size, SHA-256 and canonical release checksum.
+Updated for the 2026-07-19 v4 composition pass. The current home/forest releases reuse their immutable v3 HDR/GLB/Cycles payloads and selected immutable v2 PBR textures; studio remains v2. The authoritative executable manifest is `src/scenes/release-manifest.ts`; tests independently verify every listed byte size, SHA-256 and canonical release checksum.
 
 Poly Haven model/environment downloads are CC0. The tent derivative comes from Kenney's CC0 Survival Kit. Raw bundles remain ignored; public GLBs are normalised derivatives. Project-authored Cycles decals contain no customer data. Detailed source-bundle hashes and conversion validation are in [`scene-model-sources-v3.md`](scene-model-sources-v3.md).
 
@@ -8,20 +8,20 @@ Poly Haven model/environment downloads are CC0. The tent derivative comes from K
 
 | Scene | Current version | Release checksum |
 | --- | ---: | --- |
-| `warm-craftsman-home` | 3 | `ab9717f5abfa2796ac33d9abcc3b101b6dc9ecd1adddbfa41afada346b687b5e` |
-| `forest-camp-evening` | 3 | `452639f3e3cf9d5723d9399799d783710a314ffa635cd07b5b9fbbc6ee10189c` |
+| `warm-craftsman-home` | 4 | `ee834113e1febd642ae02d0f135f3652d9e962ed437d40ef189d4af16a59079e` |
+| `forest-camp-evening` | 4 | `457ae5440ee49a4bdcf597c656b92c26f7350f67e85e739fb86621fb2a40ecb5` |
 | `studio-neutral` | 2 | `b2284d246bab7eecab47690467374eca132330bf95f7aee7d5c01ec927df5616` |
 
-The v1 identities and former home/forest v2 releases remain pinned in code for old snapshots/regression. They are not rewritten or relabelled as v3.
+The v1 identities and former home/forest v2/v3 releases remain pinned in code for old snapshots/regression. The v4 layout does not rewrite any v3 asset byte.
 
-## Warm Craftsman home v3
+## Warm Craftsman home v4 (v3 payload + v2 floor maps)
 
-Runtime prefix: `public/scenes/warm-craftsman-home/v3/`.
+Primary reused payload prefix: `public/scenes/warm-craftsman-home/v3/`. The three room-floor maps are separately reused from `public/scenes/warm-craftsman-home/v2/textures/`; the v4 release checksum binds both exact path families.
 
 | Release asset | Bytes | SHA-256 | Provenance / role |
 | --- | ---: | --- | --- |
-| `environment-1k.hdr` | 1,662,018 | `fb0657b1145fa21107e5e925a9da6c8e84038ea6df585412e42400e8970670d1` | Poly Haven Warm Restaurant, CC0; background + PMREM input |
-| `environment-2k.hdr` | 6,517,786 | `e3d281b3773ee013069e14243b530f21f219b387f5319da1e3c5193f04ce68a1` | High tier; same CC0 environment at 2K |
+| `environment-1k.hdr` | 1,662,018 | `fb0657b1145fa21107e5e925a9da6c8e84038ea6df585412e42400e8970670d1` | Poly Haven Warm Restaurant, CC0; PMREM/environment-lighting input only, never the v4 visible background |
+| `environment-2k.hdr` | 6,517,786 | `e3d281b3773ee013069e14243b530f21f219b387f5319da1e3c5193f04ce68a1` | High-tier PMREM input; same CC0 environment at 2K |
 | `models/wooden-table-01.glb` | 540,264 | `4125d43bdd6a868819b059ed578236474163b7762b08afc03a7c68731ea2d3b9` | Poly Haven CC0 derivative; Meshopt + embedded PBR inputs |
 | `models/wooden-table-01-low.glb` | 167,372 | `8fb0ac43adecc9ddb0c000a96b9d1af4c2a384650fa1489b058cefc70b732f19` | Low; unchanged geometry, 512 px embedded PBR inputs |
 | `models/sofa-02.glb` | 402,360 | `92decfac18a97244a89632ba5b4190fac693e4155566fabfe21c893bf71ac2de` | Poly Haven CC0 derivative; Meshopt + embedded PBR inputs |
@@ -30,10 +30,13 @@ Runtime prefix: `public/scenes/warm-craftsman-home/v3/`.
 | `models/potted-plant-04.glb` | 2,021,332 | `d87f71d151c100c584d84453caa7a9529b5f7de62c5147ce95a6874aa43794a0` | Medium/High; 1K embedded PBR inputs |
 | `lighting/table-shadow.png` | 25,069 | `49bcdf89b3f1851993dd11c5c5e89d69bcc8d09c4c0613b31ea3173fac13ba6f` | Blender 5.2/Cycles fixed-subject projection |
 | `public/profiles/curved-cup-v3/lighting/cup-contact-ao.png` | 42,746 | `38c8f6a435ec49dd22a25cc130a9ccbd12f153148b433120f5c0086547e8ebd4` | Blender 5.2/Cycles profile-specific display AO |
+| `public/scenes/warm-craftsman-home/v2/textures/oak-color.jpg` | 336,305 | `d171f45ef01bc6e239b00dfaa4961bcd27f7d8e93e3962da3bd3d0ce703d802c` | Reused CC0 room-floor base colour |
+| `public/scenes/warm-craftsman-home/v2/textures/oak-normal.jpg` | 193,626 | `ba95eadc009818e161d0f753191f1bacc3fc861e593be0bc6d82b437f9ec8044` | Reused CC0 room-floor tangent normal |
+| `public/scenes/warm-craftsman-home/v2/textures/oak-roughness.jpg` | 215,155 | `f281f682e62fe322303dfeaa13dac18b5cb9e113617fe0aca43605b49161d82b` | Reused CC0 room-floor roughness |
 
-## Forest camp evening v3
+## Forest camp evening v4 (v3 payload)
 
-Runtime prefix: `public/scenes/forest-camp-evening/v3/`.
+Reused payload prefix: `public/scenes/forest-camp-evening/v3/`. Forest v4 changes only code-bound composition/background parameters and publishes a new release checksum without copying the asset bytes to a misleading v4 directory.
 
 | Release asset | Bytes | SHA-256 | Provenance / role |
 | --- | ---: | --- | --- |
@@ -63,8 +66,8 @@ Totals include the tier HDR, all tier model roles, table projection and contact 
 
 | Current release | Low | Medium | High | Ceiling result |
 | --- | ---: | ---: | ---: | --- |
-| Home v3 | 2,386,693 B | 4,693,789 B | 9,549,557 B | passes 4/7/12 MB |
-| Forest v3 | 3,383,267 B | 5,275,199 B | 10,912,637 B | passes 4/7/12 MB |
+| Home v4 | 3,131,779 B | 5,438,875 B | 10,294,643 B | passes 4/7/12 MB |
+| Forest v4 | 3,383,267 B | 5,275,199 B | 10,912,637 B | passes 4/7/12 MB |
 | Studio v2 | 1,543,419 B | 1,543,419 B | 1,543,419 B | passes 4/7/12 MB |
 
 Medium uses the 1K environment; High uses the content-bound 2K environment while retaining the same 1K model inputs. The older v2 copies remain untouched for immutable v2 replay.

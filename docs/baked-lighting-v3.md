@@ -1,6 +1,6 @@
 # Baked lighting v3
 
-This document records the v3 lighting outputs generated for the two selected merchandising scenes and `curved-cup-v3`. The scene `table-shadow.png` files and profile `cup-contact-ao.png` are current display-only runtime assets. The planar irradiance files and proof images remain staged/review outputs. None alters the optical profile, LUT, crop, source image or authoritative production PNG.
+This document records the v3 lighting outputs generated for the two selected merchandising scenes and `curved-cup-v3`. The scene `table-shadow.png` files and profile `cup-contact-ao.png` are reused byte-for-byte by the current home/forest v4 compositions as display-only runtime assets. The planar irradiance files and proof images remain staged/review outputs. None alters the optical profile, LUT, crop, source image or authoritative production PNG.
 
 ## Rebuild command
 
@@ -62,4 +62,4 @@ The alpha coverage includes pixels hidden under the physical saucer at runtime. 
 
 The runtime draws each scene projection immediately above the tabletop receiver with depth writes disabled and draws cup AO only as a display overlay on the dish top. Neither texture is referenced by the canonical plate renderer, production worker, style lab, LUT generator or manufacturing package.
 
-The planar irradiance maps establish a reproducible fixed-light baseline, but they are not claimed as final static-scene AO and are not consumed by the current GLBs. A future scene version needs geometry with matching non-overlapping UV2 islands before walls, furniture, forest floor, tent and props can consume a geometry-matched Cycles AO/direct/indirect bake. Publishing that later bake requires a new immutable scene version and checksum; it must not silently replace the current v3 release.
+The planar irradiance maps establish a reproducible fixed-light baseline, but they are not claimed as final static-scene AO and are not consumed by the current GLBs. A future scene version needs geometry with matching non-overlapping UV2 islands before walls, furniture, forest floor, tent and props can consume a geometry-matched Cycles AO/direct/indirect bake. Publishing that later bake requires a new immutable scene version and checksum; it must not silently replace the current v4 releases or the pinned v3 history.

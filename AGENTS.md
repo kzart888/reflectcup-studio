@@ -10,6 +10,7 @@ ReflectCup Studio turns a customer image into a printable plate pattern and prev
 - Renderer and mobile budgets: `docs/realtime-preview.md`
 - Scene implementation, licensing and staged asset pipeline: `docs/scene-assets.md`
 - Deterministic style research: `docs/non-ai-style-lab.md`
+- AI hidden-image research and staged ComfyUI path: `docs/ai-hidden-image-roadmap.md`
 - Authentication and customer-photo handling: `docs/security-and-privacy.md`
 - Future checkout and production files: `docs/commerce-and-production.md`
 - Required verification: `docs/testing-and-release.md`

@@ -15,6 +15,7 @@
 /data/
 /storage/
 /private/
+/docs/assets/scene-v4-audit/
 *.log
 
 # IDE and operating-system files

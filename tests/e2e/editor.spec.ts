@@ -216,7 +216,10 @@ test("an unavailable optical LUT is not replaced with a fake preview", async ({ 
   await page.goto("/studio/new");
   await page.locator('input[type="file"]').setInputFiles({ name: "portrait.png", mimeType: "image/png", buffer: png });
 
-  await expect(page.getByText(/optical mapping could not be loaded/i)).toBeVisible();
+  // Scene v4 can be loading several bounded assets in parallel when the full
+  // project runs four workers. The failure must still surface, but this gate
+  // should not confuse CPU/network contention with a missing error state.
+  await expect(page.getByText(/optical mapping could not be loaded/i)).toBeVisible({ timeout: 12_000 });
   await expect(page.getByRole("button", { name: "Confirm design" })).toBeDisabled();
 
   await page.unroute("**/plate-to-target.rg32f");
