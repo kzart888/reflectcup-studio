@@ -27,6 +27,7 @@
     "profile:generate": "tsx tools/optical-profile/generate.ts",
     "calibration:generate": "tsx tools/fixtures/generate-calibration.ts",
     "scene:bake": "tsx tools/scenes/generate-baked-assets.ts",
+    "style:review": "tsx tools/style-lab/generate-review.ts",
     "env:init": "tsx tools/local/init-env.ts",
     "local:up": "docker compose up -d postgres",
     "local:postgres": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/local/postgres.ps1",

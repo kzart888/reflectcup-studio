@@ -1,0 +1,78 @@
+{
+  "bakeEngine": "Blender Cycles fixed area-light projection",
+  "blenderVersion": "5.2.0",
+  "files": {
+    "static-irradiance-lightmap.png": {
+      "bytes": 35076,
+      "sha256": "bcc1722a323c8981101f3a540b899f303fb4f8f5653859cd362db507fc58c547"
+    },
+    "table-shadow-proof.png": {
+      "bytes": 110255,
+      "sha256": "2565463a4e7abdc160ae80f56a57ed2c15604cf8bbd6a3d2353b93df5c4643ad"
+    },
+    "table-shadow.png": {
+      "bytes": 52479,
+      "sha256": "f02241c4efbd8f8be78aae082f1070c5170bcf072e6756ae7f5d8f627b00902e"
+    }
+  },
+  "lights": [
+    {
+      "color": [
+        0.58,
+        0.7,
+        1.0
+      ],
+      "energy": 245.0,
+      "location": [
+        -0.42,
+        0.46,
+        0.92
+      ],
+      "name": "evening-sky-area",
+      "size": 0.78,
+      "type": "AREA"
+    },
+    {
+      "color": [
+        1.0,
+        0.5,
+        0.19
+      ],
+      "energy": 175.0,
+      "location": [
+        0.38,
+        -0.45,
+        0.34
+      ],
+      "name": "lantern-area",
+      "size": 0.16,
+      "type": "AREA"
+    }
+  ],
+  "physicalExtentMetres": [
+    0.48,
+    0.36
+  ],
+  "runtimeContract": "display-only; never sample from optical export",
+  "samplesContract": 32,
+  "sceneId": "forest-camp-evening",
+  "sceneVersion": 3,
+  "schemaVersion": 1,
+  "seed": 260719,
+  "shadowAlpha": {
+    "baselineIrradianceLinear": {
+      "max": 18.389656,
+      "min": 9.246483
+    },
+    "coveragePercent": 44.1861,
+    "height": 768,
+    "maxAlpha": 97,
+    "meanAlphaFullImage": 30.2449,
+    "meanAlphaNonzero": 68.4489,
+    "nonzeroPixels": 347494,
+    "p50AlphaNonzero": 97,
+    "p95AlphaNonzero": 97,
+    "renderDevice": "CPU",
+    "width": 1024
+  }
+}

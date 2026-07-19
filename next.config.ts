@@ -12,6 +12,7 @@ const nextConfig: NextConfig = {
     return [
       { source: "/scenes/:sceneId/v:version/:path*", headers: immutable },
       { source: "/scenes/shared/:hash/:path*", headers: immutable },
+      { source: "/profiles/:profileId/:path*", headers: immutable },
     ];
   },
 };

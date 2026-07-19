@@ -6,6 +6,7 @@ import { Component, Suspense, startTransition, useCallback, useEffect, useLayout
 import * as THREE from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { HDRLoader } from "three/examples/jsm/loaders/HDRLoader.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { CameraState, CropTransform, OpticalRuntime, PreviewRuntimeSettings, SceneQuality } from "@/lib/contracts";
 import { getDishReflectionParameters } from "@/optics";
 import type { DishReflectionParameters, OpticalProfile } from "@/optics";
@@ -141,6 +142,30 @@ function useOpticalUniforms(
   }), [crop.centerX, crop.centerY, crop.scale, lutTexture, sourceSize, sourceTexture]);
 }
 
+function ProfileContactAo({ geometry, url }: { geometry: THREE.BufferGeometry; url: string }) {
+  const contactTextureSource = useLoader(THREE.TextureLoader, url);
+  const contactTexture = useMemo(() => {
+    const texture = contactTextureSource.clone();
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.minFilter = THREE.LinearMipmapLinearFilter;
+    texture.magFilter = THREE.LinearFilter;
+    texture.needsUpdate = true;
+    return texture;
+  }, [contactTextureSource]);
+  useEffect(() => () => contactTexture.dispose(), [contactTexture]);
+  return <mesh geometry={geometry} position={[0, 0.0002, 0]} renderOrder={3}>
+    <meshBasicMaterial
+      map={contactTexture}
+      transparent
+      depthWrite={false}
+      toneMapped={false}
+      opacity={0.28}
+      polygonOffset
+      polygonOffsetFactor={-3}
+    />
+  </mesh>;
+}
+
 function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor, keyLightMultiplier }: {
   profile: OpticalProfile;
   sourceTexture: THREE.Texture | null;
@@ -152,15 +177,6 @@ function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor
 }) {
   const topGeometry = useMemo(() => createDishGeometry(profile), [profile]);
   const solidGeometry = useMemo(() => createDishSolidGeometry(profile), [profile]);
-  const contactTextureSource = useLoader(THREE.TextureLoader, descriptor.assetUrls["cup-contact-ao"]);
-  const contactTexture = useMemo(() => {
-    const texture = contactTextureSource.clone();
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.minFilter = THREE.LinearMipmapLinearFilter;
-    texture.magFilter = THREE.LinearFilter;
-    texture.needsUpdate = true;
-    return texture;
-  }, [contactTextureSource]);
   const opticalUniforms = useOpticalUniforms(sourceTexture, lutTexture, sourceSize, crop);
   const uniforms = useMemo(() => ({
     ...opticalUniforms,
@@ -168,12 +184,13 @@ function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor
     heroLightColor: { value: new THREE.Color(descriptor.lighting.heroColor) },
     heroLightIntensity: { value: descriptor.lighting.heroIntensity * keyLightMultiplier },
     printAmbient: { value: descriptor.subject.printAmbient },
-  }), [descriptor, keyLightMultiplier, opticalUniforms]);
+    ceramicBaseColor: { value: new THREE.Color("#f7f5ef") },
+    opaquePlateBase: { value: profile.id === "curved-cup-v3" },
+  }), [descriptor, keyLightMultiplier, opticalUniforms, profile.id]);
   useEffect(() => () => {
     topGeometry.dispose();
     solidGeometry.dispose();
-    contactTexture.dispose();
-  }, [contactTexture, solidGeometry, topGeometry]);
+  }, [solidGeometry, topGeometry]);
   const sphereCenterY = profile.dish.center[1] + profile.dish.sphereRadius;
   const rimY = sphereCenterY - Math.sqrt(
     profile.dish.sphereRadius * profile.dish.sphereRadius - profile.dish.radius * profile.dish.radius,
@@ -199,17 +216,9 @@ function Dish({ profile, sourceTexture, lutTexture, sourceSize, crop, descriptor
         toneMapped
       />
     </mesh>
-    <mesh geometry={topGeometry} position={[0, 0.0002, 0]} renderOrder={3}>
-      <meshBasicMaterial
-        map={contactTexture}
-        transparent
-        depthWrite={false}
-        toneMapped={false}
-        opacity={0.78}
-        polygonOffset
-        polygonOffsetFactor={-3}
-      />
-    </mesh>
+    {profile.id === "curved-cup-v3"
+      ? <ProfileContactAo geometry={topGeometry} url={descriptor.assetUrls["cup-contact-ao"]} />
+      : null}
   </group>;
 }
 
@@ -385,6 +394,7 @@ function retainSceneAssetCache(descriptor: SceneDescriptor): void {
   for (const url of Object.values(evicted.assetUrls)) {
     if (retainedUrls.has(url)) continue;
     if (url.toLowerCase().endsWith(".hdr")) useLoader.clear(HDRLoader, url);
+    else if (url.toLowerCase().endsWith(".glb")) useLoader.clear(GLTFLoader, url);
     else useLoader.clear(THREE.TextureLoader, url);
   }
 }

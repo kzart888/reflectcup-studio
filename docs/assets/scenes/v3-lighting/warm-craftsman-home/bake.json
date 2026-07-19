@@ -1,0 +1,62 @@
+{
+  "bakeEngine": "Blender Cycles fixed area-light projection",
+  "blenderVersion": "5.2.0",
+  "files": {
+    "static-irradiance-lightmap.png": {
+      "bytes": 25359,
+      "sha256": "2aec0e7e063a07ebf4e51239a82aa3d8d7b64ae3969fc799c716b0a5444ffb93"
+    },
+    "table-shadow-proof.png": {
+      "bytes": 158503,
+      "sha256": "db153db7e10955f4462395c9877c1465875b89a3511a08b0e6bfec5254019059"
+    },
+    "table-shadow.png": {
+      "bytes": 25069,
+      "sha256": "49bcdf89b3f1851993dd11c5c5e89d69bcc8d09c4c0613b31ea3173fac13ba6f"
+    }
+  },
+  "lights": [
+    {
+      "color": [
+        1.0,
+        0.82,
+        0.62
+      ],
+      "energy": 510.0,
+      "location": [
+        -0.34,
+        -0.42,
+        0.86
+      ],
+      "name": "window-area",
+      "size": 0.46,
+      "type": "AREA"
+    }
+  ],
+  "physicalExtentMetres": [
+    0.48,
+    0.36
+  ],
+  "runtimeContract": "display-only; never sample from optical export",
+  "samplesContract": 32,
+  "sceneId": "warm-craftsman-home",
+  "sceneVersion": 3,
+  "schemaVersion": 1,
+  "seed": 260719,
+  "shadowAlpha": {
+    "baselineIrradianceLinear": {
+      "max": 31.943537,
+      "min": 12.607703
+    },
+    "coveragePercent": 30.253,
+    "height": 768,
+    "maxAlpha": 85,
+    "meanAlphaFullImage": 24.3246,
+    "meanAlphaNonzero": 80.4039,
+    "nonzeroPixels": 237919,
+    "p50AlphaNonzero": 85,
+    "p95AlphaNonzero": 85,
+    "renderDevice": "CPU",
+    "width": 1024
+  }
+}

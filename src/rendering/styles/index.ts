@@ -16,6 +16,6 @@ export const STYLE_PROVIDER_REGISTRY = Object.freeze([
   ERROR_DIFFUSION_PROVIDER
 ]);
 
-export function findStyleProvider(id: string) {
-  return STYLE_PROVIDER_REGISTRY.find((provider) => provider.id === id);
+export function findStyleProvider(id: string, version: number) {
+  return STYLE_PROVIDER_REGISTRY.find((provider) => provider.id === id && provider.version === version);
 }

@@ -84,7 +84,7 @@ function renderCells(
 
 export const BAYER_DITHER_PROVIDER: StyleProvider = defineStyleProvider({
   id: "bayer-dither",
-  version: 1,
+  version: 2,
   label: "Bayer ordered dither",
   parameters: [
     { key: "matrixSize", label: "Matrix size", unit: "integer", defaultValue: 4, minimum: 4, maximum: 8 },
@@ -124,7 +124,7 @@ const STUCKI_TAPS: readonly DiffusionTap[] = [
 
 export const ERROR_DIFFUSION_PROVIDER: StyleProvider = defineStyleProvider({
   id: "error-diffusion",
-  version: 1,
+  version: 2,
   label: "Serpentine error diffusion",
   parameters: [
     { key: "kernel", label: "Kernel (1=Floyd–Steinberg, 2=Stucki)", unit: "integer", defaultValue: 1, minimum: 1, maximum: 2 },
@@ -146,7 +146,9 @@ export const ERROR_DIFFUSION_PROVIDER: StyleProvider = defineStyleProvider({
       for (let step = 0; step < cells.columns; step += 1) {
         const column = reverse ? cells.columns - 1 - step : step;
         const pixel = row * cells.columns + column;
-        const adjusted = Math.max(0, Math.min(255, cells.values[pixel] + errors[pixel]));
+        // Keep the accumulated value unbounded until palette selection. Early
+        // clipping discards quantisation debt and biases long tonal ramps.
+        const adjusted = cells.values[pixel] + errors[pixel];
         const quantized = adjusted < 128 ? 0 : 255;
         values[pixel] = quantized;
         const error = adjusted - quantized;

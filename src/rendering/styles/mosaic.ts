@@ -15,7 +15,7 @@ import type { StyleProcessOptions, StyleProvider } from "./types";
 
 export const SQUARE_MOSAIC_PROVIDER: StyleProvider = defineStyleProvider({
   id: "square-mosaic",
-  version: 1,
+  version: 2,
   label: "Square mosaic",
   parameters: [
     { key: "cellSizeMm", label: "Cell size", unit: "mm", defaultValue: 4.8, minimum: 0.4, maximum: 24 }
@@ -64,7 +64,7 @@ function nearestHexKey(x: number, y: number, radius: number): string {
 
 export const HEX_MOSAIC_PROVIDER: StyleProvider = defineStyleProvider({
   id: "hex-mosaic",
-  version: 1,
+  version: 2,
   label: "Hex mosaic",
   parameters: [
     { key: "cellDiameterMm", label: "Cell diameter", unit: "mm", defaultValue: 5.4, minimum: 0.4, maximum: 24 }

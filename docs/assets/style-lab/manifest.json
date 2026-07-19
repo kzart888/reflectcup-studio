@@ -1,7 +1,12 @@
 {
-  "schemaVersion": 1,
-  "generatorVersion": "style-lab-v1",
+  "schemaVersion": 3,
+  "generatorVersion": "style-lab-optical-domains-v3",
   "deterministicSeed": 20260718,
+  "colourAndMetric": {
+    "processing": "8-bit sRGB-domain RGBA; source alpha preserved",
+    "score": "RGB MSE and derived PSNR on the 3x3-eroded reversible target core",
+    "warning": "Research ranking only; not perceptual, ICC or physical-print validation"
+  },
   "dimensions": {
     "width": 320,
     "height": 240
@@ -12,9 +17,55 @@
     "minFeatureMm": 0.4,
     "minPitchMm": 0.6
   },
+  "rasterization": {
+    "flat": {
+      "pixels": [
+        320,
+        240
+      ],
+      "frameMm": [
+        96,
+        72
+      ]
+    },
+    "target": {
+      "pixels": [
+        320,
+        320
+      ],
+      "frameMm": [
+        84,
+        76
+      ],
+      "mmPerPixel": [
+        0.2625,
+        0.2375
+      ]
+    },
+    "plate": {
+      "pixels": [
+        768,
+        768
+      ],
+      "diameterMm": 182.4924,
+      "mmPerPixel": 0.2376203125,
+      "note": "millimetre parameters are conservatively rounded upward to whole pixels"
+    }
+  },
+  "opticalProfile": {
+    "id": "curved-cup-80-dish-182-v3",
+    "version": 3,
+    "geometryChecksum": "9b6195c56ec790ce",
+    "generatorChecksum": "df081cc3082e2126",
+    "lutChecksum": "eb366e4c3e2707104a50b49a78dd1803",
+    "profileSha256": "8cbab255b6382c2df175071381e42f06e9bdb17d7f7dfc2d35d6ae6921667102",
+    "lutSha256": "924e79f8950349ff1cd9edc201a5cb92bcb1bb19dd6ed1b4e654b6c1f306cae0",
+    "validMaskSha256": "79dac011f15e18618972ac6d98c657e4ef2a0ebcfec3271668d5fb084b25e31c",
+    "coreMaskPngSha256": "68ba59a61573a647ed5509f1fd44f02f3a7fcfc11ea20cd8c98974c80e63c288"
+  },
   "contactSheet": {
     "path": "review-contact-sheet.png",
-    "sha256": "c010b3be2a8f1144cbf9470a5a9ca74311a5b4475821f19466a18ebcf865253f"
+    "sha256": "48d61f9af29d2250dc6a1ec73a0fe4b722b0aacb0f036b40296b03b0638ecd14"
   },
   "outputs": [
     {
@@ -30,7 +81,7 @@
       "sha256": "d3e5a66780297d7e57ef892178d9d5bbab681af002f30e2607e496c507054e80",
       "recipe": {
         "id": "square-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellSizeMm": 4.8
         },
@@ -51,7 +102,7 @@
       "sha256": "9bbe90884be510a5c7336c3ecac2e5196d93fb6cb33daa40278f05e41b2663d0",
       "recipe": {
         "id": "hex-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellDiameterMm": 5.4
         },
@@ -69,13 +120,13 @@
       "fixture": "checker",
       "style": "clustered-dot",
       "path": "outputs/checker/clustered-dot.png",
-      "sha256": "6c4ffa743b4fb1bb3aa587fbaa28f41e5ebe7b4dbbbead3bcc9ed054bf082eba",
+      "sha256": "7b12714b4795f26ebdda327f5c27e8903fa72ea01ce478e950f246a350005c74",
       "recipe": {
         "id": "clustered-dot-halftone",
-        "version": 1,
+        "version": 2,
         "params": {
           "gamma": 1,
-          "maxDotDiameterMm": 2.2,
+          "maxDotDiameterMm": 3.39,
           "minDotDiameterMm": 0.4,
           "pitchMm": 2.4
         },
@@ -96,7 +147,7 @@
       "sha256": "da0dc359fc165c7013fd9a834289f52edf3178013599247dd49f95fe87531829",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 4,
           "samplePitchMm": 1.2
@@ -118,7 +169,7 @@
       "sha256": "0be7712f423f9968f41f007e0b4fe9c748471fb758eeb5771c308f00a222aa5a",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 8,
           "samplePitchMm": 1.2
@@ -137,10 +188,10 @@
       "fixture": "checker",
       "style": "floyd-steinberg",
       "path": "outputs/checker/floyd-steinberg.png",
-      "sha256": "45b7f18f1d98e32e06693086087bd939f92e2db99af8eb76c350268d0ee3d352",
+      "sha256": "8687ecc818bbaadf02b852cf21e991af7a91a5ac73202baf5a8a7deca67b7379",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 1,
           "samplePitchMm": 1.2
@@ -159,10 +210,10 @@
       "fixture": "checker",
       "style": "stucki",
       "path": "outputs/checker/stucki.png",
-      "sha256": "fc909063241fb61bfae3dd8e1b107a24fa511b54e493144367a7069ea9dea67f",
+      "sha256": "9bbb4f098729c16c3c2e0b7c9ea50646206cd83793629fd08e9076d02741f37c",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 2,
           "samplePitchMm": 1.2
@@ -190,7 +241,7 @@
       "sha256": "ff81bf502cbf0fea38aa2a27997b6070b3d9810da276256c558cfc780616e12d",
       "recipe": {
         "id": "square-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellSizeMm": 4.8
         },
@@ -211,7 +262,7 @@
       "sha256": "001f9c1858a691ce666dcbf8ee7e8f6b4748edd1716214d5b79dbb78a386f5e7",
       "recipe": {
         "id": "hex-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellDiameterMm": 5.4
         },
@@ -229,13 +280,13 @@
       "fixture": "portrait",
       "style": "clustered-dot",
       "path": "outputs/portrait/clustered-dot.png",
-      "sha256": "e21cf8bac79119cd157934e7d9ad286582160209b492c49a6938425240b13539",
+      "sha256": "3ef2814abab1e04ee21d0ff885663dd345f2ea42fbae2c5bc3d61df513d4efa0",
       "recipe": {
         "id": "clustered-dot-halftone",
-        "version": 1,
+        "version": 2,
         "params": {
           "gamma": 1,
-          "maxDotDiameterMm": 2.2,
+          "maxDotDiameterMm": 3.39,
           "minDotDiameterMm": 0.4,
           "pitchMm": 2.4
         },
@@ -256,7 +307,7 @@
       "sha256": "9ca8899bafb530bb03457d003abae82685ee0d8448309a17cc84a918cab3b25e",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 4,
           "samplePitchMm": 1.2
@@ -278,7 +329,7 @@
       "sha256": "044daf650d5e7e2bba8cf31e2b31c1cc1a2dfba058b525e9b0027030baf19218",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 8,
           "samplePitchMm": 1.2
@@ -297,10 +348,10 @@
       "fixture": "portrait",
       "style": "floyd-steinberg",
       "path": "outputs/portrait/floyd-steinberg.png",
-      "sha256": "6e0c4e43121047fb8587e71cf52d555d15cbe01a4da2a1c146f8172292865dd2",
+      "sha256": "b1725cc03548d2d5385e442d4b038579c7f55e919f5dcb7a575386ad157d99bf",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 1,
           "samplePitchMm": 1.2
@@ -322,7 +373,7 @@
       "sha256": "a8d92bd463ff8dad071b70f1b3af4c1f570cca2b15e962cac9246ed77a257ee4",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 2,
           "samplePitchMm": 1.2
@@ -350,7 +401,7 @@
       "sha256": "85de48d59c53dd705a8f086a2fa8806cb04e7b9c60b8788e510729f48558d801",
       "recipe": {
         "id": "square-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellSizeMm": 4.8
         },
@@ -371,7 +422,7 @@
       "sha256": "b6d45f18cb6a034b21131c3994498baaf1baa3d06750085d1c8fc386a7b6663a",
       "recipe": {
         "id": "hex-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellDiameterMm": 5.4
         },
@@ -389,13 +440,13 @@
       "fixture": "text",
       "style": "clustered-dot",
       "path": "outputs/text/clustered-dot.png",
-      "sha256": "63d83d5047e6b110c85be79cfb8a58153e24baf7f5f09ad59bcb93f82658fc9c",
+      "sha256": "bf66cabd08c782ecb1e112bf27d8e8ba94e6ac52b2c3655e97c8bae8e20771c4",
       "recipe": {
         "id": "clustered-dot-halftone",
-        "version": 1,
+        "version": 2,
         "params": {
           "gamma": 1,
-          "maxDotDiameterMm": 2.2,
+          "maxDotDiameterMm": 3.39,
           "minDotDiameterMm": 0.4,
           "pitchMm": 2.4
         },
@@ -416,7 +467,7 @@
       "sha256": "24659043c56de44d8f20951e064974fc174f94ca5b4452af969e8e1f63ad30a8",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 4,
           "samplePitchMm": 1.2
@@ -438,7 +489,7 @@
       "sha256": "fec617d93e0eacafc24d41f5a0e827a4f87ba01d88ce967d0a8e6d0c50c3e3c1",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 8,
           "samplePitchMm": 1.2
@@ -457,10 +508,10 @@
       "fixture": "text",
       "style": "floyd-steinberg",
       "path": "outputs/text/floyd-steinberg.png",
-      "sha256": "d4947c951d0d98fcb4f9430d76b88d3793bea5453ce976d7f0ebf781193e47e4",
+      "sha256": "11cc75ee2953f56a41831f30b58772fcb35fab483a142614cda15aa666f83e38",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 1,
           "samplePitchMm": 1.2
@@ -479,10 +530,10 @@
       "fixture": "text",
       "style": "stucki",
       "path": "outputs/text/stucki.png",
-      "sha256": "f65772c922cce163daa3da06697de68d67b815a1bbc7702fee4e70e76fe487d0",
+      "sha256": "3495d8670e677d3acf383370ad133284090fc0529ea79b2763531d322f379f3f",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 2,
           "samplePitchMm": 1.2
@@ -510,7 +561,7 @@
       "sha256": "a09a38a8771d00f87d54622643738bbd8937021a58d6ec9ffd0f668db922532b",
       "recipe": {
         "id": "square-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellSizeMm": 4.8
         },
@@ -531,7 +582,7 @@
       "sha256": "e403f13ee09a1c114e858dfdda707d7980ae0ee31b9492ef48ca6764da99e133",
       "recipe": {
         "id": "hex-mosaic",
-        "version": 1,
+        "version": 2,
         "params": {
           "cellDiameterMm": 5.4
         },
@@ -549,13 +600,13 @@
       "fixture": "landscape",
       "style": "clustered-dot",
       "path": "outputs/landscape/clustered-dot.png",
-      "sha256": "e076c4bb574e6c015ce85c3e59010aa07c0147f69347a1757b5a6925c098612f",
+      "sha256": "31dff71cc5b6b1d330374ecad32606aad55e88b356dfb076421f25c0f13b75eb",
       "recipe": {
         "id": "clustered-dot-halftone",
-        "version": 1,
+        "version": 2,
         "params": {
           "gamma": 1,
-          "maxDotDiameterMm": 2.2,
+          "maxDotDiameterMm": 3.39,
           "minDotDiameterMm": 0.4,
           "pitchMm": 2.4
         },
@@ -576,7 +627,7 @@
       "sha256": "de4705889bf8c175f38b53ef56765fbf7c05c25d8e49e22637637c23cf703792",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 4,
           "samplePitchMm": 1.2
@@ -598,7 +649,7 @@
       "sha256": "1b0cdcc64ad4491c09d9e35c10638019258b9a21290d1efe38084497d1602660",
       "recipe": {
         "id": "bayer-dither",
-        "version": 1,
+        "version": 2,
         "params": {
           "matrixSize": 8,
           "samplePitchMm": 1.2
@@ -617,10 +668,10 @@
       "fixture": "landscape",
       "style": "floyd-steinberg",
       "path": "outputs/landscape/floyd-steinberg.png",
-      "sha256": "9f5f83999c2444800e5465a4f3f96ffe429f77d3690eec8a79781a5d4ba84e8a",
+      "sha256": "31606f2226090c0130914b3a93db05f3e8b0f16eb97dee5702ee58eb38c4f820",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 1,
           "samplePitchMm": 1.2
@@ -642,7 +693,7 @@
       "sha256": "c9446dc376ef9af3f5bd4562627f2418a14f2262306167af636c233e9208ad3b",
       "recipe": {
         "id": "error-diffusion",
-        "version": 1,
+        "version": 2,
         "params": {
           "kernel": 2,
           "samplePitchMm": 1.2
@@ -656,6 +707,2136 @@
           "minPitchMm": 0.6
         }
       }
+    }
+  ],
+  "opticalDomains": [
+    {
+      "fixture": "checker",
+      "path": "optical-domains/checker-contact-sheet.png",
+      "sha256": "db4d956f18600fc50e67323a5fe1565c9775dcbc2058b5014d83cdbcd576d0fb",
+      "cases": [
+        {
+          "style": "square-mosaic",
+          "targetRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 1042.727685,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 4.346057,
+              "psnrDb": 41.74985
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 3574.522805,
+              "psnrDb": 12.598623
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 1898.300289,
+              "psnrDb": 15.347154
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 1042.727685,
+              "psnrDb": 17.949095
+            }
+          }
+        },
+        {
+          "style": "hex-mosaic",
+          "targetRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 2.7
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 957.819417,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 7.096614,
+              "psnrDb": 39.620292
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 3091.545307,
+              "psnrDb": 13.229047
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 1685.274771,
+              "psnrDb": 15.864096
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 957.819417,
+              "psnrDb": 18.317967
+            }
+          }
+        },
+        {
+          "style": "clustered-dot",
+          "targetRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 1.69,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 7689.654298,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 150.033517,
+              "psnrDb": 26.368921
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12627.325743,
+              "psnrDb": 7.11769
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10939.422491,
+              "psnrDb": 7.74086
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 7689.654298,
+              "psnrDb": 9.271735
+            }
+          }
+        },
+        {
+          "style": "bayer-4",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 9424.141988,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 310.09259,
+              "psnrDb": 23.21589
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12748.653093,
+              "psnrDb": 7.076161
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11764.808631,
+              "psnrDb": 7.424955
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 9424.141988,
+              "psnrDb": 8.388385
+            }
+          }
+        },
+        {
+          "style": "bayer-8",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 10983.420531,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 160.056853,
+              "psnrDb": 26.088061
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 13251.780011,
+              "psnrDb": 6.908061
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12450.979529,
+              "psnrDb": 7.178768
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10983.420531,
+              "psnrDb": 7.723427
+            }
+          }
+        },
+        {
+          "style": "floyd-steinberg",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 9475.673713,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 233.112171,
+              "psnrDb": 24.455154
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11746.037934,
+              "psnrDb": 7.43189
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11287.513916,
+              "psnrDb": 7.604821
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 9475.673713,
+              "psnrDb": 8.364703
+            }
+          }
+        },
+        {
+          "style": "stucki",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 9242.961003,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 205.228807,
+              "psnrDb": 25.00842
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10635.708632,
+              "psnrDb": 7.863139
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10522.060341,
+              "psnrDb": 7.909796
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 9242.961003,
+              "psnrDb": 8.472692
+            }
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "portrait",
+      "path": "optical-domains/portrait-contact-sheet.png",
+      "sha256": "8aebc1e49eae2ba8c6284a2a53c079025181eba2ba7fad4ecac7e52041043bd4",
+      "cases": [
+        {
+          "style": "square-mosaic",
+          "targetRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 192.480021,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 2.048311,
+              "psnrDb": 45.016845
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 571.920779,
+              "psnrDb": 20.557445
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 337.552244,
+              "psnrDb": 22.847394
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 192.480021,
+              "psnrDb": 25.286947
+            }
+          }
+        },
+        {
+          "style": "hex-mosaic",
+          "targetRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 2.7
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 151.005094,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 3.997173,
+              "psnrDb": 42.113274
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 454.461708,
+              "psnrDb": 21.555831
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 297.019148,
+              "psnrDb": 23.402959
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 151.005094,
+              "psnrDb": 26.340888
+            }
+          }
+        },
+        {
+          "style": "clustered-dot",
+          "targetRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 1.69,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 7453.357268,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 143.783806,
+              "psnrDb": 26.553704
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10487.758627,
+              "psnrDb": 7.923977
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10614.073734,
+              "psnrDb": 7.871983
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 7453.357268,
+              "psnrDb": 9.407284
+            }
+          }
+        },
+        {
+          "style": "bayer-4",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 10182.943572,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 293.504169,
+              "psnrDb": 23.454661
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12319.219871,
+              "psnrDb": 7.224972
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12277.520593,
+              "psnrDb": 7.239697
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10182.943572,
+              "psnrDb": 8.05207
+            }
+          }
+        },
+        {
+          "style": "bayer-8",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 11985.642543,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 148.454307,
+              "psnrDb": 26.414876
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 13130.749927,
+              "psnrDb": 6.947908
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 13210.717733,
+              "psnrDb": 6.921539
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11985.642543,
+              "psnrDb": 7.34419
+            }
+          }
+        },
+        {
+          "style": "floyd-steinberg",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 10242.47714,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 251.511633,
+              "psnrDb": 24.125223
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12224.541819,
+              "psnrDb": 7.258478
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12086.367015,
+              "psnrDb": 7.307846
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10242.47714,
+              "psnrDb": 8.026754
+            }
+          }
+        },
+        {
+          "style": "stucki",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 10221.205045,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 232.177363,
+              "psnrDb": 24.472605
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12045.636291,
+              "psnrDb": 7.322506
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11833.292195,
+              "psnrDb": 7.399748
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10221.205045,
+              "psnrDb": 8.035783
+            }
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "text",
+      "path": "optical-domains/text-contact-sheet.png",
+      "sha256": "c042fdfdb73ae5df8d537bab4def23892d7278f893640043a77d2ec9871a8a6c",
+      "cases": [
+        {
+          "style": "square-mosaic",
+          "targetRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 1580.075119,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 3.164301,
+              "psnrDb": 43.128026
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 3928.532403,
+              "psnrDb": 12.1885
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 2773.085607,
+              "psnrDb": 13.701171
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 1580.075119,
+              "psnrDb": 16.144026
+            }
+          }
+        },
+        {
+          "style": "hex-mosaic",
+          "targetRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 2.7
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 1374.873712,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 6.607152,
+              "psnrDb": 39.930661
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 3875.129524,
+              "psnrDb": 12.247941
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 2466.213336,
+              "psnrDb": 14.210497
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 1374.873712,
+              "psnrDb": 16.748176
+            }
+          }
+        },
+        {
+          "style": "clustered-dot",
+          "targetRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 1.69,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 2762.282842,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 80.144909,
+              "psnrDb": 29.092044
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 6993.426223,
+              "psnrDb": 9.683904
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 6245.356064,
+              "psnrDb": 10.175232
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 2762.282842,
+              "psnrDb": 13.718122
+            }
+          }
+        },
+        {
+          "style": "bayer-4",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 4341.202014,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 124.346694,
+              "psnrDb": 27.184461
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 6186.980608,
+              "psnrDb": 10.216016
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 5994.985403,
+              "psnrDb": 10.352922
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 4341.202014,
+              "psnrDb": 11.754704
+            }
+          }
+        },
+        {
+          "style": "bayer-8",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 5022.305698,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 82.510381,
+              "psnrDb": 28.965718
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 7222.365858,
+              "psnrDb": 9.544009
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 6162.643472,
+              "psnrDb": 10.233133
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 5022.305698,
+              "psnrDb": 11.121772
+            }
+          }
+        },
+        {
+          "style": "floyd-steinberg",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 4053.90089,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 112.100834,
+              "psnrDb": 27.634715
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 5689.12406,
+              "psnrDb": 10.58035
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 5045.695499,
+              "psnrDb": 11.101593
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 4053.90089,
+              "psnrDb": 12.052072
+            }
+          }
+        },
+        {
+          "style": "stucki",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 3495.858556,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 92.096606,
+              "psnrDb": 28.488367
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 4981.035603,
+              "psnrDb": 11.157607
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 4101.062239,
+              "psnrDb": 12.00184
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 3495.858556,
+              "psnrDb": 12.695265
+            }
+          }
+        }
+      ]
+    },
+    {
+      "fixture": "landscape",
+      "path": "optical-domains/landscape-contact-sheet.png",
+      "sha256": "81ee10ad98ff1ee35a81524cb1b7d147e01460fb840fe3b2eb686458d46f2716",
+      "cases": [
+        {
+          "style": "square-mosaic",
+          "targetRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 4.8
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "square-mosaic",
+            "version": 2,
+            "params": {
+              "cellSizeMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 76.076387,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 1.044232,
+              "psnrDb": 47.942832
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 337.173552,
+              "psnrDb": 22.852269
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 169.268221,
+              "psnrDb": 25.845049
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 76.076387,
+              "psnrDb": 29.318305
+            }
+          }
+        },
+        {
+          "style": "hex-mosaic",
+          "targetRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 5.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "hex-mosaic",
+            "version": 2,
+            "params": {
+              "cellDiameterMm": 2.7
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 70.263552,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 1.663281,
+              "psnrDb": 45.921147
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 271.869688,
+              "psnrDb": 23.787196
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 144.587343,
+              "psnrDb": 26.529501
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 70.263552,
+              "psnrDb": 29.663503
+            }
+          }
+        },
+        {
+          "style": "clustered-dot",
+          "targetRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 3.39,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 2.4
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "clustered-dot-halftone",
+            "version": 2,
+            "params": {
+              "gamma": 1,
+              "maxDotDiameterMm": 1.69,
+              "minDotDiameterMm": 0.4,
+              "pitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 8927.84373,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 127.84869,
+              "psnrDb": 27.063841
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11191.865484,
+              "psnrDb": 7.641779
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11437.972089,
+              "psnrDb": 7.547313
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 8927.84373,
+              "psnrDb": 8.623338
+            }
+          }
+        },
+        {
+          "style": "bayer-4",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 4,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 10587.348348,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 288.267473,
+              "psnrDb": 23.532847
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12910.172072,
+              "psnrDb": 7.021483
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12762.354631,
+              "psnrDb": 7.071496
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 10587.348348,
+              "psnrDb": 7.882932
+            }
+          }
+        },
+        {
+          "style": "bayer-8",
+          "targetRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "bayer-dither",
+            "version": 2,
+            "params": {
+              "matrixSize": 8,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 12782.831904,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 145.841486,
+              "psnrDb": 26.491993
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 14099.568077,
+              "psnrDb": 6.638746
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 14138.99252,
+              "psnrDb": 6.626619
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12782.831904,
+              "psnrDb": 7.064533
+            }
+          }
+        },
+        {
+          "style": "floyd-steinberg",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 1,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 11057.984324,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 250.960673,
+              "psnrDb": 24.134747
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 13216.172843,
+              "psnrDb": 6.919747
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12993.442828,
+              "psnrDb": 6.993561
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11057.984324,
+              "psnrDb": 7.694044
+            }
+          }
+        },
+        {
+          "style": "stucki",
+          "targetRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "target",
+            "physical": {
+              "widthMm": 84,
+              "heightMm": 76,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "plateRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 1.2
+            },
+            "seed": 20260718,
+            "domain": "plate",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedRecipe": {
+            "id": "error-diffusion",
+            "version": 2,
+            "params": {
+              "kernel": 2,
+              "samplePitchMm": 0.6
+            },
+            "seed": 20260718,
+            "domain": "plate-constrained",
+            "physical": {
+              "widthMm": 182.4924,
+              "heightMm": 182.4924,
+              "minFeatureMm": 0.4,
+              "minPitchMm": 0.6
+            }
+          },
+          "constrainedCandidateCount": 4,
+          "constrainedScore": 11049.710364,
+          "metrics": {
+            "targetLoopAgainstStyledGoal": {
+              "sampleCount": 42337,
+              "mse": 250.284007,
+              "psnrDb": 24.146473
+            },
+            "targetProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 13075.167844,
+              "psnrDb": 6.966331
+            },
+            "plateProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 12932.230752,
+              "psnrDb": 7.014069
+            },
+            "constrainedProofAgainstSource": {
+              "sampleCount": 42337,
+              "mse": 11049.710364,
+              "psnrDb": 7.697295
+            }
+          }
+        }
+      ]
     }
   ]
 }

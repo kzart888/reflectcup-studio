@@ -11,7 +11,7 @@ ReflectCup Studio is an open-source web customizer for mirror-anamorphic cups. A
 - Curved-cup v3 mapping over geometry derived from audited measurements, with a reversible core and a crisp vector contour that excludes the disconnected top island
 - WebGL2 cup reflection with a fixed optical centre, PMREM environment response and honest off-axis distortion
 - Switchable warm Craftsman home, forest camp and neutral optical-studio previews; the choice autosaves and is frozen into confirmation
-- Lightweight procedural near/mid scenery, CC0 HDR/PBR assets and offline-generated soft table shadow/contact AO, without runtime shadow maps
+- Compact CC0-derived GLB near/mid scenery with embedded PBR inputs and Meshopt loading, plus fixed-light Cycles table projection/contact AO without runtime shadow maps
 - Anonymous, resumable design sessions with optimistic autosave
 - Administrator roles, versioned optical profiles and audited settings
 - 1024 preview and 4096 test-production bundle
@@ -30,7 +30,7 @@ Requirements: Node.js 24+, pnpm 10+, a WebGL2 browser, and PostgreSQL 16 (Docker
 2. Run `pnpm local:up`.
 3. Run `pnpm db:migrate` and `pnpm db:seed`.
 4. Run `pnpm admin:create -- --email owner@example.com` and store the one-time password securely.
-5. Optionally reproduce public fixtures with `pnpm profile:generate -- --profile nominal-v1`, `pnpm profile:generate -- --profile curved-cup-v2`, `pnpm profile:generate -- --profile curved-cup-v3`, `pnpm calibration:generate` and `pnpm scene:bake`.
+5. Optionally reproduce optical fixtures with `pnpm profile:generate -- --profile nominal-v1`, `pnpm profile:generate -- --profile curved-cup-v2`, `pnpm profile:generate -- --profile curved-cup-v3` and `pnpm calibration:generate`. `pnpm scene:bake` reproduces the historical analytic scene decals; the Blender 5.2/Cycles v3 command is recorded separately in `docs/baked-lighting-v3.md`.
 6. Run `pnpm dev` and, in a second terminal, `pnpm worker:production`. Open the customer studio at `http://127.0.0.1:3000/studio/new` or the administrator login at `http://127.0.0.1:3000/admin/login`.
 
 If Docker Desktop is unavailable on Windows, `pnpm local:postgres` starts the bundled/local PostgreSQL 16 workspace cluster on port 54329; then run the same migration and seed commands.
@@ -43,9 +43,9 @@ Run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm worker:build`, `pnpm build
 
 ## Scene asset status
 
-The shipped scene runtime uses Three.js-authored geometry, JPEG PBR maps, equirectangular HDR environments, PMREM and deterministic PNG shadow/AO layers. The selected concept frames under `docs/assets/scenes/concepts/` are visual references only and are never used as fake panoramic backgrounds.
+The current customer catalog ships home and forest **v3** scenes plus the unchanged neutral-studio **v2** diagnostic scene. Home/forest v3 load CC0-derived, Meshopt-compressed GLBs with embedded base-colour, normal and packed material inputs, tiered 1K/2K HDR background/PMREM sources, Blender 5.2/Cycles fixed-subject table projections and a profile-specific contact-AO overlay. The selected concept frames under `docs/assets/scenes/concepts/` are visual references only and are never used as fake panoramic backgrounds.
 
-Blender and `toktx`/glTF compression tooling were unavailable in the implementation environment. Consequently the planned Blender/Cycles lightmaps, UV2 GLB/Meshopt packages, KTX2 textures and same-scene 360° panorama/HDR pairs are a staged pipeline, not a shipped capability. Mobile/save-data devices start from the Low 1K tier, regular desktops start at Medium 1K and eligible desktops promote to the 2K High tier while idle. See `docs/scene-assets.md` and `docs/realtime-preview.md`.
+This pass does not ship KTX2, geometry-matched UV2 full-scene lightmaps or a panorama/HDR rendered from the same authored Blender scene. The generated planar irradiance images are staged evidence only and are not sampled by the runtime. Low uses reduced 512/480 px model derivatives, Medium uses the 1K environment and 1K model payloads, and High upgrades the environment to the existing 2K source while retaining the 1K models. See `docs/scene-assets.md`, `docs/realtime-preview.md` and `docs/design-qa.md`.
 
 ## Private calibration boundary
 
@@ -53,4 +53,4 @@ The public repository contains only a synthetic profile and generic engine. Hist
 
 ## License
 
-Apache-2.0. Bundled environment and material assets are CC0 Poly Haven resources; see `docs/scene-assets.md` and the Studio Small 08 adjacent provenance file.
+Apache-2.0. Bundled environment and most model/material assets are CC0 Poly Haven resources; the compact tent derivative is from Kenney's CC0 Survival Kit. See `docs/scene-assets.md` and `docs/scene-model-sources-v3.md`.

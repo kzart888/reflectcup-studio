@@ -53,6 +53,9 @@ function normalizeParameters(
           `${definition.key} must be between ${definition.minimum} and ${definition.maximum}`
         );
       }
+      if (definition.unit === "integer" && !Number.isInteger(value)) {
+        throw new Error(`${definition.key} must be an integer`);
+      }
       return [definition.key, value] as const;
     })
     .sort(([left], [right]) => left.localeCompare(right))));
@@ -147,12 +150,18 @@ export async function executeStyle(
 
 export function pixelsPerMillimetre(image: RawRgbaImage, physical: StylePhysicalSpec): number {
   validatePhysicalSpec(physical);
+  // Providers currently use square raster kernels. Choosing the lower density
+  // is conservative for a non-square physical frame: a requested feature will
+  // not become smaller than requested along either physical axis.
   return Math.min(image.width / physical.widthMm, image.height / physical.heightMm);
 }
 
 export function millimetresToPixels(image: RawRgbaImage, physical: StylePhysicalSpec, mm: number): number {
   if (!Number.isFinite(mm) || mm <= 0) throw new Error("Physical style dimensions must be positive");
-  return Math.max(1, Math.round(mm * pixelsPerMillimetre(image, physical)));
+  // Round upward so raster quantisation never silently violates a configured
+  // minimum printable size. The tiny epsilon keeps exact integer conversions
+  // (for example 0.6 mm at 1 px / 0.6 mm) from rounding up due to FP noise.
+  return Math.max(1, Math.ceil(mm * pixelsPerMillimetre(image, physical) - 1e-9));
 }
 
 export function requirePhysicalParameter(

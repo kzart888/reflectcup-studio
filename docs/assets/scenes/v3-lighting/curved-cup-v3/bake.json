@@ -1,0 +1,43 @@
+{
+  "bakeEngine": "Blender Cycles ambient-occlusion shader envelope",
+  "blenderVersion": "5.2.0",
+  "contactAlpha": {
+    "aoDistanceMm": 12.0,
+    "contactPeakBandMm": [
+      1,
+      3
+    ],
+    "coveragePercent": 8.7462,
+    "cupAxisMm": [
+      -30.0,
+      0
+    ],
+    "cupFootRadiusMm": 31.952057,
+    "fadeCutoffMm": 12,
+    "height": 1024,
+    "maxAlpha": 133,
+    "meanAlphaFullImage": 5.0228,
+    "meanAlphaNonzero": 57.4281,
+    "nonzeroPixels": 91711,
+    "p50AlphaNonzero": 35,
+    "p95AlphaNonzero": 133,
+    "plateRadiusMm": 91.2462,
+    "renderDevice": "CPU",
+    "width": 1024
+  },
+  "files": {
+    "cup-contact-ao-proof.png": {
+      "bytes": 48887,
+      "sha256": "18530471d5e491a04c93f62f575c81f7e33c683d254266ca1f835dfeec845c30"
+    },
+    "cup-contact-ao.png": {
+      "bytes": 42746,
+      "sha256": "38c8f6a435ec49dd22a25cc130a9ccbd12f153148b433120f5c0086547e8ebd4"
+    }
+  },
+  "opticalProfile": "curved-cup-v3",
+  "runtimeContract": "display-only plate overlay; never sample from optical export",
+  "samplesContract": 32,
+  "schemaVersion": 1,
+  "seed": 260719
+}

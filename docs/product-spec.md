@@ -17,7 +17,7 @@ Implemented:
 - identity mapped style, transparent unmapped fill, design sessions, administrator access and a test production bundle;
 - an internal non-AI style comparison lab that is not connected to customer saves or exports.
 
-Not implemented: AI disguise/styling, customer-facing deterministic styles, automatic background fill, Shopify deposit/full payment, fulfilment and customer accounts. The target Blender/Cycles + GLB/Meshopt + KTX2 + matched 360° panorama scene pipeline is also not complete; the current scenes use procedural geometry and CC0 HDR/JPEG/PNG assets. Disabled capabilities are not displayed.
+Not implemented: AI disguise/styling, customer-facing deterministic styles, automatic background fill, Shopify deposit/full payment, fulfilment and customer accounts. The v3 home/forest scenes now use CC0-derived GLB/Meshopt models with embedded PBR inputs and Blender/Cycles fixed-subject shadow/contact layers. The complete target environment pipeline is still unfinished: KTX2 delivery, geometry-matched UV2 full-scene direct/indirect/AO lighting, and a same-authored-scene 360° panorama/HDR are not shipped. Disabled capabilities are not displayed.
 
 Scene selection is presentation-only. It autosaves with the same revision lock as crop/camera and its ID/version/checksum are frozen into confirmation, but it cannot alter optical mapping, canonical render or the production PNG.
 

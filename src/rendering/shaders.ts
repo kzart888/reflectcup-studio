@@ -77,11 +77,13 @@ export const plateFragmentShader = /* glsl */ `
   uniform vec3 heroLightColor;
   uniform float heroLightIntensity;
   uniform float printAmbient;
+  uniform vec3 ceramicBaseColor;
+  uniform bool opaquePlateBase;
   ${opticalSampling}
 
   void main() {
     vec4 printColor = samplePrintedImage(vUv);
-    if (printColor.a < 0.01) discard;
+    if (!opaquePlateBase && printColor.a < 0.01) discard;
     vec3 normal = normalize(vWorldNormal);
     vec3 lightDirection = normalize(heroLightDirection);
     float diffuse = max(dot(normal, lightDirection), 0.0);
@@ -89,8 +91,13 @@ export const plateFragmentShader = /* glsl */ `
     vec3 halfDirection = normalize(lightDirection + viewDirection);
     float ceramicHighlight = pow(max(dot(normal, halfDirection), 0.0), 46.0) * 0.11;
     vec3 illumination = vec3(printAmbient) + heroLightColor * diffuse * heroLightIntensity * 0.24;
-    vec3 shaded = printColor.rgb * illumination + heroLightColor * ceramicHighlight;
-    gl_FragColor = vec4(shaded, printColor.a * 0.965);
+    // Transparent LUT pixels mean "no ink" on an opaque ceramic plate, not
+    // a physical hole through which the table should become visible.
+    vec3 surfaceColor = opaquePlateBase
+      ? mix(ceramicBaseColor, printColor.rgb, printColor.a)
+      : printColor.rgb;
+    vec3 shaded = surfaceColor * illumination + heroLightColor * ceramicHighlight;
+    gl_FragColor = vec4(shaded, opaquePlateBase ? 1.0 : printColor.a * 0.965);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }

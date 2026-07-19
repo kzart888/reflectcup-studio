@@ -1,48 +1,76 @@
 # Scene asset release manifest
 
-Generated for the 2026-07-19 scene pass. All third-party files below come from Poly Haven under CC0 1.0; the source and author credits remain in `scene-assets.md`. The 14 bundled Poly Haven files match the byte size and MD5 published by the official Poly Haven files API. Project-authored decals are deterministic outputs of `pnpm scene:bake` and contain no customer data.
+Generated for the 2026-07-19 v3 scene pass. This document lists the files referenced by the **current** customer catalog: home v3, forest v3 and studio v2. The authoritative executable manifest is `src/scenes/release-manifest.ts`; tests independently verify every listed byte size, SHA-256 and canonical release checksum.
 
-These hashes are mirrored in `src/scenes/release-manifest.ts` and are part of the runtime v2 `SceneDescriptor.checksum`, together with visual parameters and explicit geometry/renderer pipeline versions. The v2 files use immutable versioned paths; the shared AO uses a content-hash path. Recompute the hashes and publish a new scene version whenever a visible asset changes. Never overwrite the pinned identity-only v1 checksums.
+Poly Haven model/environment downloads are CC0. The tent derivative comes from Kenney's CC0 Survival Kit. Raw bundles remain ignored; public GLBs are normalised derivatives. Project-authored Cycles decals contain no customer data. Detailed source-bundle hashes and conversion validation are in [`scene-model-sources-v3.md`](scene-model-sources-v3.md).
 
-## Warm Craftsman home
+## Current release identities
 
-Runtime prefix: `public/scenes/warm-craftsman-home/v2/`.
+| Scene | Current version | Release checksum |
+| --- | ---: | --- |
+| `warm-craftsman-home` | 3 | `ab9717f5abfa2796ac33d9abcc3b101b6dc9ecd1adddbfa41afada346b687b5e` |
+| `forest-camp-evening` | 3 | `452639f3e3cf9d5723d9399799d783710a314ffa635cd07b5b9fbbc6ee10189c` |
+| `studio-neutral` | 2 | `b2284d246bab7eecab47690467374eca132330bf95f7aee7d5c01ec927df5616` |
 
-| Repository file | Bytes | SHA-256 | Provenance |
+The v1 identities and former home/forest v2 releases remain pinned in code for old snapshots/regression. They are not rewritten or relabelled as v3.
+
+## Warm Craftsman home v3
+
+Runtime prefix: `public/scenes/warm-craftsman-home/v3/`.
+
+| Release asset | Bytes | SHA-256 | Provenance / role |
 | --- | ---: | --- | --- |
-| `environment-1k.hdr` | 1,662,018 | `fb0657b1145fa21107e5e925a9da6c8e84038ea6df585412e42400e8970670d1` | Poly Haven `warm_restaurant`, CC0, 1K HDR |
-| `environment-2k.hdr` | 6,517,786 | `e3d281b3773ee013069e14243b530f21f219b387f5319da1e3c5193f04ce68a1` | Poly Haven `warm_restaurant`, CC0, 2K HDR |
-| `textures/oak-color.jpg` | 336,305 | `d171f45ef01bc6e239b00dfaa4961bcd27f7d8e93e3962da3bd3d0ce703d802c` | Poly Haven `fine_grained_wood`, CC0, 1K diffuse |
-| `textures/oak-normal.jpg` | 193,626 | `ba95eadc009818e161d0f753191f1bacc3fc861e593be0bc6d82b437f9ec8044` | Poly Haven `fine_grained_wood`, CC0, 1K OpenGL normal |
-| `textures/oak-roughness.jpg` | 215,155 | `f281f682e62fe322303dfeaa13dac18b5cb9e113617fe0aca43605b49161d82b` | Poly Haven `fine_grained_wood`, CC0, 1K roughness |
-| `table-shadow.png` | 21,818 | `7905ea45eda58f1a6533442006043e5707fa07ad580fb57132f069859d36da31` | ReflectCup Studio deterministic bake |
+| `environment-1k.hdr` | 1,662,018 | `fb0657b1145fa21107e5e925a9da6c8e84038ea6df585412e42400e8970670d1` | Poly Haven Warm Restaurant, CC0; background + PMREM input |
+| `environment-2k.hdr` | 6,517,786 | `e3d281b3773ee013069e14243b530f21f219b387f5319da1e3c5193f04ce68a1` | High tier; same CC0 environment at 2K |
+| `models/wooden-table-01.glb` | 540,264 | `4125d43bdd6a868819b059ed578236474163b7762b08afc03a7c68731ea2d3b9` | Poly Haven CC0 derivative; Meshopt + embedded PBR inputs |
+| `models/wooden-table-01-low.glb` | 167,372 | `8fb0ac43adecc9ddb0c000a96b9d1af4c2a384650fa1489b058cefc70b732f19` | Low; unchanged geometry, 512 px embedded PBR inputs |
+| `models/sofa-02.glb` | 402,360 | `92decfac18a97244a89632ba5b4190fac693e4155566fabfe21c893bf71ac2de` | Poly Haven CC0 derivative; Meshopt + embedded PBR inputs |
+| `models/sofa-02-low.glb` | 170,872 | `b7c39901e5a85262ee17b84df6844fd417291065c02ac5c45f7b2942aa5f7c88` | Low; unchanged geometry, 512 px embedded PBR inputs |
+| `models/potted-plant-04-low.glb` | 318,616 | `06b827280ba85b31063f2609ba545de2b9090abfb416d39a88ac1cea50db42fb` | Low; unchanged geometry, 512 px embedded PBR inputs |
+| `models/potted-plant-04.glb` | 2,021,332 | `d87f71d151c100c584d84453caa7a9529b5f7de62c5147ce95a6874aa43794a0` | Medium/High; 1K embedded PBR inputs |
+| `lighting/table-shadow.png` | 25,069 | `49bcdf89b3f1851993dd11c5c5e89d69bcc8d09c4c0613b31ea3173fac13ba6f` | Blender 5.2/Cycles fixed-subject projection |
+| `public/profiles/curved-cup-v3/lighting/cup-contact-ao.png` | 42,746 | `38c8f6a435ec49dd22a25cc130a9ccbd12f153148b433120f5c0086547e8ebd4` | Blender 5.2/Cycles profile-specific display AO |
 
-## Forest camp evening
+## Forest camp evening v3
 
-Runtime prefix: `public/scenes/forest-camp-evening/v2/`.
+Runtime prefix: `public/scenes/forest-camp-evening/v3/`.
 
-| Repository file | Bytes | SHA-256 | Provenance |
+| Release asset | Bytes | SHA-256 | Provenance / role |
 | --- | ---: | --- | --- |
-| `environment-1k.hdr` | 1,899,638 | `38a1fb0e3c3a8f36516107a9b6ca4d25b8ddf9196748607a68c5c06e234852da` | Poly Haven `dark_autumn_forest`, CC0, 1K HDR |
-| `environment-2k.hdr` | 7,537,076 | `8aae232ebfcae34a8ee0154f4fbb793e659e7dfdf27e5e14beee67b42b5e32cc` | Poly Haven `dark_autumn_forest`, CC0, 2K HDR |
-| `textures/walnut-color.jpg` | 754,754 | `d68da31655bf47024af893156a6a01a6c95bb60f55d97e2dc9bdd47be320e5b5` | Poly Haven `dark_wood`, CC0, 1K diffuse |
-| `textures/walnut-normal.jpg` | 344,338 | `c42541f1bda0a14b39f120c24407eeba699af8ac85b371c7cef98ffd7d7b13bf` | Poly Haven `dark_wood`, CC0, 1K OpenGL normal |
-| `textures/walnut-roughness.jpg` | 574,415 | `47ea12dbf649109b02eaa164dde9732a74e839957f29ad0ec7f5266b575d1835` | Poly Haven `dark_wood`, CC0, 1K roughness |
-| `textures/bark-color.jpg` | 729,893 | `4213441aebcb72b9911f5a860e9ce74a61a8f6ce3b9c23d1f204173e7e7f6066` | Poly Haven `bark_brown_01`, CC0, 1K diffuse |
-| `textures/bark-normal.jpg` | 1,226,534 | `9d1537b3429579436a62890bb7c5050a0172a15ce768787eacde81c5ccefc9cc` | Poly Haven `bark_brown_01`, CC0, 1K OpenGL normal |
-| `textures/bark-roughness.jpg` | 201,307 | `4e7f62508cf77faebfeee15ffb571ff02c45c18d5174aa19fcb8b98506359c5c` | Poly Haven `bark_brown_01`, CC0, 1K roughness |
-| `table-shadow.png` | 22,555 | `adca9e9828f197667b69136bc3c1f5ff71d3ecdf99dd54ae15a97c763312d82f` | ReflectCup Studio deterministic bake |
+| `environment-1k.hdr` | 1,899,638 | `38a1fb0e3c3a8f36516107a9b6ca4d25b8ddf9196748607a68c5c06e234852da` | Poly Haven Dark Autumn Forest, CC0; background + PMREM input |
+| `environment-2k.hdr` | 7,537,076 | `8aae232ebfcae34a8ee0154f4fbb793e659e7dfdf27e5e14beee67b42b5e32cc` | High tier; same CC0 environment at 2K |
+| `models/outdoor-table-chair-set-01.glb` | 1,078,120 | `722f63754f52fc44ca10cc2479ce24c0eb7462b1d5e2b83aee9dbcb3f7ce55f7` | Poly Haven CC0 derivative; Meshopt + embedded PBR inputs |
+| `models/outdoor-table-chair-set-01-low.glb` | 501,252 | `d28edb5ffcdcb05382f998686f67e24c8f59d136af05b94de2a2b8d881e3084c` | Low; unchanged geometry, 512 px embedded PBR inputs |
+| `models/lantern-01-low.glb` | 867,708 | `60df83c65b8368ddb49e5a898caaf8a053a33f3c8e4909820454c4fb91f02639` | Low; unchanged geometry, 480 px embedded PBR inputs |
+| `models/lantern-01.glb` | 2,182,772 | `20257bdde2d3c928d329cda19c0272057a2aafce1e62b1cca61391d156702356` | Medium/High; 1K embedded PBR inputs |
+| `models/kenney-tent.glb` | 19,444 | `633eeff968f46eae534ff6b003c0d5dbf46f151f93cb5c186b5be8b9449eb2be` | Kenney Survival Kit CC0 derivative; Meshopt, colour-only mid/far prop |
+| `lighting/table-shadow.png` | 52,479 | `f02241c4efbd8f8be78aae082f1070c5170bcf072e6756ae7f5d8f627b00902e` | Blender 5.2/Cycles fixed-subject projection |
+| `public/profiles/curved-cup-v3/lighting/cup-contact-ao.png` | 42,746 | `38c8f6a435ec49dd22a25cc130a9ccbd12f153148b433120f5c0086547e8ebd4` | Blender 5.2/Cycles profile-specific display AO |
 
-## Neutral studio and shared decals
+## Neutral studio v2
 
-The current studio release uses `public/scenes/studio-neutral/v2/`; its original root HDR remains available for the legacy release. Shared AO path: `public/scenes/shared/f30bf914fdcc7fc6/cup-contact-ao.png`.
+Runtime prefix: `public/scenes/studio-neutral/v2/`. Shared AO prefix: `public/scenes/shared/f30bf914fdcc7fc6/`.
 
-| Repository file | Bytes | SHA-256 | Provenance |
+| Release asset | Bytes | SHA-256 | Provenance / role |
 | --- | ---: | --- | --- |
-| `studio-neutral/v2/studio_small_08_1k.hdr` | 1,508,872 | `f6a989f89432eb4eee3191364a9c1ceed195c4ec3544173a3c04fd96cb91d0ba` | Poly Haven `studio_small_08`, CC0, 1K HDR |
-| `studio-neutral/v2/table-shadow.png` | 17,297 | `8883a7f375d4e5359afa3acc5f25b0030b94f58555f6885f91038f7f003e5070` | ReflectCup Studio deterministic bake |
-| `shared/f30bf914fdcc7fc6/cup-contact-ao.png` | 17,250 | `f30bf914fdcc7fc6360e4a0f99a23dbb4ec38e45fdaf83c4edca13949a860b7e` | ReflectCup Studio deterministic bake |
+| `studio_small_08_1k.hdr` | 1,508,872 | `f6a989f89432eb4eee3191364a9c1ceed195c4ec3544173a3c04fd96cb91d0ba` | Poly Haven Studio Small 08, CC0, 1K HDR |
+| `table-shadow.png` | 17,297 | `8883a7f375d4e5359afa3acc5f25b0030b94f58555f6885f91038f7f003e5070` | Historical ReflectCup deterministic analytic decal |
+| `shared/f30bf914fdcc7fc6/cup-contact-ao.png` | 17,250 | `f30bf914fdcc7fc6360e4a0f99a23dbb4ec38e45fdaf83c4edca13949a860b7e` | Historical ReflectCup deterministic analytic decal |
 
-## Budget check
+## Catalog budget check
 
-The largest high-quality scene is `forest-camp-evening`: 11,368,317 bytes for its catalogued environment and material textures, or 11,408,122 bytes including the scene shadow and shared cup AO. This remains below the 12 MB scene-package ceiling. The warm scene totals 7,301,940 bytes including its decals; the neutral scene totals 1,543,419 bytes.
+Totals include the tier HDR, all tier model roles, table projection and contact AO exactly once.
+
+| Current release | Low | Medium | High | Ceiling result |
+| --- | ---: | ---: | ---: | --- |
+| Home v3 | 2,386,693 B | 4,693,789 B | 9,549,557 B | passes 4/7/12 MB |
+| Forest v3 | 3,383,267 B | 5,275,199 B | 10,912,637 B | passes 4/7/12 MB |
+| Studio v2 | 1,543,419 B | 1,543,419 B | 1,543,419 B | passes 4/7/12 MB |
+
+Medium uses the 1K environment; High uses the content-bound 2K environment while retaining the same 1K model inputs. The older v2 copies remain untouched for immutable v2 replay.
+
+## Build/review outputs outside the release manifest
+
+Review-only `static-irradiance-lightmap.png`, shadow/AO proofs and bake metadata live under `docs/assets/scenes/v3-lighting/`, outside public runtime URLs. They are documented in [`baked-lighting-v3.md`](baked-lighting-v3.md) and do not participate in the scene checksum. In particular, the irradiance PNG is staged input awaiting a geometry-matched UV2 receiver, not a deployed full-scene lightmap.
+
+No KTX2 resource is listed because no current scene release ships or loads KTX2. Publishing KTX2, full UV2 lighting, a new environment, or any changed model/visual parameter requires a new immutable scene version and checksum.

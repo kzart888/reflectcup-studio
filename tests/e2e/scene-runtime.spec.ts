@@ -103,9 +103,9 @@ test("scene switching waits for the device-appropriate preview tier", async ({ p
   await disableIdlePromotion(page);
   const state = await mockSceneSession(page);
   const mediumOnly = new Set<string>();
-  // Bark and walnut colour preserve material identity at Low. Normal and
-  // roughness maps are above the mobile tier and must not be fetched here.
-  const mediumOnlyNames = ["walnut-normal.jpg", "walnut-roughness.jpg"];
+  // Low keeps the same model geometry but uses smaller embedded PBR images.
+  // A constrained device must not fetch the 1K Medium model derivatives.
+  const mediumOnlyNames = ["outdoor-table-chair-set-01.glb", "lantern-01.glb"];
   page.on("request", (request) => {
     if (mediumOnlyNames.some((name) => request.url().endsWith(name))) mediumOnly.add(request.url());
   });
@@ -113,7 +113,7 @@ test("scene switching waits for the device-appropriate preview tier", async ({ p
   let delayedRequestStarted = false;
   let releaseDelayedRequest: (() => void) | undefined;
   const delayedRequestReleased = new Promise<void>((resolve) => { releaseDelayedRequest = resolve; });
-  await page.route("**/scenes/forest-camp-evening/v2/environment-1k.hdr", async (route) => {
+  await page.route("**/scenes/forest-camp-evening/v3/environment-1k.hdr", async (route) => {
     delayedRequestStarted = true;
     await delayedRequestReleased;
     await route.continue();
@@ -179,7 +179,7 @@ test("desktop never requests the 2K environment before its idle promotion gate",
   await mockSceneSession(page);
   let highEnvironmentRequests = 0;
   page.on("request", (request) => {
-    if (request.url().endsWith("/scenes/warm-craftsman-home/v2/environment-2k.hdr")) {
+    if (request.url().endsWith("/scenes/warm-craftsman-home/v3/environment-2k.hdr")) {
       highEnvironmentRequests += 1;
     }
   });

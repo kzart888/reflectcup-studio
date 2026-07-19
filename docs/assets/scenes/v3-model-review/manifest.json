@@ -1,0 +1,172 @@
+{
+  "generatedOn": "2026-07-19",
+  "purpose": "Independent staged-model visual QA; these renders are not runtime scene captures.",
+  "renderer": {
+    "application": "Blender 5.2.0 LTS",
+    "engine": "BLENDER_EEVEE",
+    "panelResolution": [
+      560,
+      560
+    ],
+    "colorManagement": "AgX - Medium High Contrast",
+    "camera": {
+      "lensMm": 52,
+      "frontAzimuthDegrees": 0,
+      "threeQuarterAzimuthDegrees": 35,
+      "perAssetAutoFit": true
+    },
+    "lighting": "fixed warm key, cool fill, warm rim, dark studio world; shadows enabled",
+    "clay": {
+      "baseColorLinearRgba": [
+        0.16,
+        0.18,
+        0.21,
+        1
+      ],
+      "roughness": 0.58
+    }
+  },
+  "findings": [
+    "Poly Haven derivatives retain readable tangent-space normal and packed material response under the common rig.",
+    "Wooden Table 01 is only 0.549 m high, below a normal dining table; use it as a low console/bench prop or apply an explicit scene-instance transform rather than silently changing the source derivative.",
+    "Lantern transmission/glass renders without opaque black faces; its 33,902 triangles make it a High/Medium detail prop, not a mandatory Low asset.",
+    "The initial Kenney tent derivative contained only the timber frame. Visual QA caught this and the derivative now combines tent.glb with tent-canvas.glb.",
+    "The combined Kenney tent is intentionally stylized and colour-map-only; use it in the mid/far field.",
+    "The 1 m lineup confirms plausible furniture, lantern, plant and tent scale after the recorded metre conversion."
+  ],
+  "assets": [
+    {
+      "id": "wooden-table-01",
+      "label": "Wooden Table 01",
+      "dimensions": "1.800 × 0.657 × 0.549 m",
+      "triangles": 952,
+      "path": "public/scenes/warm-craftsman-home/v3/models/wooden-table-01.glb",
+      "bytes": 540264,
+      "sha256": "4125d43bdd6a868819b059ed578236474163b7762b08afc03a7c68731ea2d3b9"
+    },
+    {
+      "id": "sofa-02",
+      "label": "Sofa 02",
+      "dimensions": "1.807 × 0.818 × 0.709 m",
+      "triangles": 2728,
+      "path": "public/scenes/warm-craftsman-home/v3/models/sofa-02.glb",
+      "bytes": 402360,
+      "sha256": "92decfac18a97244a89632ba5b4190fac693e4155566fabfe21c893bf71ac2de"
+    },
+    {
+      "id": "potted-plant-04",
+      "label": "Potted Plant 04",
+      "dimensions": "0.168 × 0.185 × 0.267 m",
+      "triangles": 8929,
+      "path": "public/scenes/warm-craftsman-home/v3/models/potted-plant-04.glb",
+      "bytes": 2021332,
+      "sha256": "d87f71d151c100c584d84453caa7a9529b5f7de62c5147ce95a6874aa43794a0"
+    },
+    {
+      "id": "outdoor-table-chair-set-01",
+      "label": "Outdoor Table + Chairs",
+      "dimensions": "0.776 × 1.831 × 0.859 m",
+      "triangles": 9828,
+      "path": "public/scenes/forest-camp-evening/v3/models/outdoor-table-chair-set-01.glb",
+      "bytes": 1078120,
+      "sha256": "722f63754f52fc44ca10cc2479ce24c0eb7462b1d5e2b83aee9dbcb3f7ce55f7"
+    },
+    {
+      "id": "lantern-01",
+      "label": "Lantern 01",
+      "dimensions": "0.122 × 0.097 × 0.294 m",
+      "triangles": 33902,
+      "path": "public/scenes/forest-camp-evening/v3/models/lantern-01.glb",
+      "bytes": 2182772,
+      "sha256": "20257bdde2d3c928d329cda19c0272057a2aafce1e62b1cca61391d156702356"
+    },
+    {
+      "id": "kenney-tent",
+      "label": "Kenney Tent + Canvas",
+      "dimensions": "2.243 × 2.244 × 1.965 m",
+      "triangles": 272,
+      "path": "public/scenes/forest-camp-evening/v3/models/kenney-tent.glb",
+      "bytes": 19444,
+      "sha256": "633eeff968f46eae534ff6b003c0d5dbf46f151f93cb5c186b5be8b9449eb2be"
+    }
+  ],
+  "lowVariants": [
+    {
+      "id": "wooden-table-01-low",
+      "sourceAssetId": "wooden-table-01",
+      "path": "public/scenes/warm-craftsman-home/v3/models/wooden-table-01-low.glb",
+      "maximumTextureEdgePx": 512,
+      "budgetBytes": 262144,
+      "bytes": 167372,
+      "sha256": "8fb0ac43adecc9ddb0c000a96b9d1af4c2a384650fa1489b058cefc70b732f19"
+    },
+    {
+      "id": "sofa-02-low",
+      "sourceAssetId": "sofa-02",
+      "path": "public/scenes/warm-craftsman-home/v3/models/sofa-02-low.glb",
+      "maximumTextureEdgePx": 512,
+      "budgetBytes": 262144,
+      "bytes": 170872,
+      "sha256": "b7c39901e5a85262ee17b84df6844fd417291065c02ac5c45f7b2942aa5f7c88"
+    },
+    {
+      "id": "potted-plant-04-low",
+      "sourceAssetId": "potted-plant-04",
+      "path": "public/scenes/warm-craftsman-home/v3/models/potted-plant-04-low.glb",
+      "maximumTextureEdgePx": 512,
+      "budgetBytes": 786432,
+      "bytes": 318616,
+      "sha256": "06b827280ba85b31063f2609ba545de2b9090abfb416d39a88ac1cea50db42fb"
+    },
+    {
+      "id": "outdoor-table-chair-set-01-low",
+      "sourceAssetId": "outdoor-table-chair-set-01",
+      "path": "public/scenes/forest-camp-evening/v3/models/outdoor-table-chair-set-01-low.glb",
+      "maximumTextureEdgePx": 512,
+      "budgetBytes": 600000,
+      "bytes": 501252,
+      "sha256": "d28edb5ffcdcb05382f998686f67e24c8f59d136af05b94de2a2b8d881e3084c"
+    },
+    {
+      "id": "lantern-01-low",
+      "sourceAssetId": "lantern-01",
+      "path": "public/scenes/forest-camp-evening/v3/models/lantern-01-low.glb",
+      "maximumTextureEdgePx": 480,
+      "budgetBytes": 896748,
+      "bytes": 867708,
+      "sha256": "60df83c65b8368ddb49e5a898caaf8a053a33f3c8e4909820454c4fb91f02639"
+    }
+  ],
+  "outputs": [
+    {
+      "path": "docs/assets/scenes/v3-model-review/warm-craftsman-home-material.png",
+      "bytes": 1229347,
+      "sha256": "5e93fdb3f611a0e173fc83f3324e7d2c971aec052f14b737e43abb3efa1302c4"
+    },
+    {
+      "path": "docs/assets/scenes/v3-model-review/warm-craftsman-home-clay.png",
+      "bytes": 1124052,
+      "sha256": "e90054de65e05351f983b763277ff85437578ae2d3cfa9764f875a5a94467272"
+    },
+    {
+      "path": "docs/assets/scenes/v3-model-review/warm-craftsman-home-scale-lineup.png",
+      "bytes": 340677,
+      "sha256": "7dc116769ca623b9cf6c91cfa4aa4f757e4fab230230a15d4bc3174156474f40"
+    },
+    {
+      "path": "docs/assets/scenes/v3-model-review/forest-camp-evening-material.png",
+      "bytes": 1193921,
+      "sha256": "c00586dfc27e75e29104177e456a3e6aba11aca2674c1d427c5cfb0ce1706e59"
+    },
+    {
+      "path": "docs/assets/scenes/v3-model-review/forest-camp-evening-clay.png",
+      "bytes": 1147366,
+      "sha256": "305b6031326a91defe18ad49458e0908db5cf2cc831575db3bfd47d66490c94b"
+    },
+    {
+      "path": "docs/assets/scenes/v3-model-review/forest-camp-evening-scale-lineup.png",
+      "bytes": 369867,
+      "sha256": "414a9c320b377d589d3c08e5485c0f1f40963e671b095861f1d6666ad55d7eed"
+    }
+  ]
+}

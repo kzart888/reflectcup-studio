@@ -42,6 +42,7 @@ export type SceneAssetFile = {
 export type SceneQualityManifest = {
   environmentKey: string;
   textureKeys: readonly string[];
+  modelKeys?: Readonly<Record<string, string>>;
 };
 
 export type SceneVisualContract = {
@@ -63,6 +64,13 @@ export type SceneVisualContract = {
     printAmbient: number;
   };
   tableShadow: {
+    assetKey: string;
+    opacity: number;
+    size: readonly [number, number];
+    offset: readonly [number, number];
+    rotation: number;
+  };
+  groundOcclusion?: {
     assetKey: string;
     opacity: number;
     size: readonly [number, number];
@@ -96,7 +104,7 @@ const sharedContactAo: SceneAssetFile = {
   sha256: "f30bf914fdcc7fc6360e4a0f99a23dbb4ec38e45fdaf83c4edca13949a860b7e",
 };
 
-export const SCENE_RELEASES = [
+export const LEGACY_SCENE_V2_RELEASES = [
   {
     id: "studio-neutral",
     version: 2,
@@ -324,6 +332,219 @@ export const SCENE_RELEASES = [
       rendererVersion: "reflective-subject-glsl3-v2",
       environmentPipelineVersion: "equirectangular-pmrem-idle-lru-v2",
       shadowPipelineVersion: "baked-decal-v1",
+    },
+  },
+] as const satisfies readonly SceneRelease[];
+
+const curvedCupV3ContactAo: SceneAssetFile = {
+  key: "cup-contact-ao",
+  url: "/profiles/curved-cup-v3/lighting/cup-contact-ao.png",
+  bytes: 42_746,
+  sha256: "38c8f6a435ec49dd22a25cc130a9ccbd12f153148b433120f5c0086547e8ebd4",
+};
+
+export const SCENE_RELEASES = [
+  LEGACY_SCENE_V2_RELEASES[0],
+  {
+    id: "warm-craftsman-home",
+    version: 3,
+    status: "published",
+    checksum: "ab9717f5abfa2796ac33d9abcc3b101b6dc9ecd1adddbfa41afada346b687b5e",
+    assets: [
+      {
+        key: "environment-1k",
+        url: "/scenes/warm-craftsman-home/v3/environment-1k.hdr",
+        bytes: 1_662_018,
+        sha256: "fb0657b1145fa21107e5e925a9da6c8e84038ea6df585412e42400e8970670d1",
+      },
+      {
+        key: "environment-2k",
+        url: "/scenes/warm-craftsman-home/v3/environment-2k.hdr",
+        bytes: 6_517_786,
+        sha256: "e3d281b3773ee013069e14243b530f21f219b387f5319da1e3c5193f04ce68a1",
+      },
+      {
+        key: "model-table",
+        url: "/scenes/warm-craftsman-home/v3/models/wooden-table-01.glb",
+        bytes: 540_264,
+        sha256: "4125d43bdd6a868819b059ed578236474163b7762b08afc03a7c68731ea2d3b9",
+      },
+      {
+        key: "model-table-low",
+        url: "/scenes/warm-craftsman-home/v3/models/wooden-table-01-low.glb",
+        bytes: 167_372,
+        sha256: "8fb0ac43adecc9ddb0c000a96b9d1af4c2a384650fa1489b058cefc70b732f19",
+      },
+      {
+        key: "model-sofa",
+        url: "/scenes/warm-craftsman-home/v3/models/sofa-02.glb",
+        bytes: 402_360,
+        sha256: "92decfac18a97244a89632ba5b4190fac693e4155566fabfe21c893bf71ac2de",
+      },
+      {
+        key: "model-sofa-low",
+        url: "/scenes/warm-craftsman-home/v3/models/sofa-02-low.glb",
+        bytes: 170_872,
+        sha256: "b7c39901e5a85262ee17b84df6844fd417291065c02ac5c45f7b2942aa5f7c88",
+      },
+      {
+        key: "model-plant-low",
+        url: "/scenes/warm-craftsman-home/v3/models/potted-plant-04-low.glb",
+        bytes: 318_616,
+        sha256: "06b827280ba85b31063f2609ba545de2b9090abfb416d39a88ac1cea50db42fb",
+      },
+      {
+        key: "model-plant",
+        url: "/scenes/warm-craftsman-home/v3/models/potted-plant-04.glb",
+        bytes: 2_021_332,
+        sha256: "d87f71d151c100c584d84453caa7a9529b5f7de62c5147ce95a6874aa43794a0",
+      },
+      {
+        key: "table-shadow",
+        url: "/scenes/warm-craftsman-home/v3/lighting/table-shadow.png",
+        bytes: 25_069,
+        sha256: "49bcdf89b3f1851993dd11c5c5e89d69bcc8d09c4c0613b31ea3173fac13ba6f",
+      },
+      curvedCupV3ContactAo,
+    ],
+    qualityAssets: {
+      low: {
+        environmentKey: "environment-1k",
+        textureKeys: [],
+        modelKeys: { table: "model-table-low", sofa: "model-sofa-low", plant: "model-plant-low" },
+      },
+      medium: {
+        environmentKey: "environment-1k",
+        textureKeys: [],
+        modelKeys: { table: "model-table", sofa: "model-sofa", plant: "model-plant" },
+      },
+      high: {
+        environmentKey: "environment-2k",
+        textureKeys: [],
+        modelKeys: { table: "model-table", sofa: "model-sofa", plant: "model-plant" },
+      },
+    },
+    visual: {
+      background: { mode: "environment", color: "#d8c6aa", blur: 0.08, intensity: 0.84, rotationY: -0.52 },
+      lighting: {
+        ambientIntensity: 0.38,
+        environmentIntensity: 0.96,
+        heroPosition: [0.34, 0.66, 0.46],
+        heroColor: "#fff0d2",
+        heroIntensity: 2.35,
+      },
+      subject: { printAmbient: 0.64 },
+      tableShadow: {
+        assetKey: "table-shadow",
+        opacity: 0.64,
+        size: [0.48, 0.36],
+        offset: [0, 0],
+        rotation: 0,
+      },
+    },
+    renderContract: {
+      geometryVersion: "cc0-near-mid-meshopt-v3",
+      rendererVersion: "reflective-subject-glsl3-v3",
+      environmentPipelineVersion: "equirectangular-pmrem-idle-lru-v2",
+      shadowPipelineVersion: "cycles-planar-decal-v3",
+    },
+  },
+  {
+    id: "forest-camp-evening",
+    version: 3,
+    status: "published",
+    checksum: "452639f3e3cf9d5723d9399799d783710a314ffa635cd07b5b9fbbc6ee10189c",
+    assets: [
+      {
+        key: "environment-1k",
+        url: "/scenes/forest-camp-evening/v3/environment-1k.hdr",
+        bytes: 1_899_638,
+        sha256: "38a1fb0e3c3a8f36516107a9b6ca4d25b8ddf9196748607a68c5c06e234852da",
+      },
+      {
+        key: "environment-2k",
+        url: "/scenes/forest-camp-evening/v3/environment-2k.hdr",
+        bytes: 7_537_076,
+        sha256: "8aae232ebfcae34a8ee0154f4fbb793e659e7dfdf27e5e14beee67b42b5e32cc",
+      },
+      {
+        key: "model-table-set",
+        url: "/scenes/forest-camp-evening/v3/models/outdoor-table-chair-set-01.glb",
+        bytes: 1_078_120,
+        sha256: "722f63754f52fc44ca10cc2479ce24c0eb7462b1d5e2b83aee9dbcb3f7ce55f7",
+      },
+      {
+        key: "model-table-set-low",
+        url: "/scenes/forest-camp-evening/v3/models/outdoor-table-chair-set-01-low.glb",
+        bytes: 501_252,
+        sha256: "d28edb5ffcdcb05382f998686f67e24c8f59d136af05b94de2a2b8d881e3084c",
+      },
+      {
+        key: "model-lantern-low",
+        url: "/scenes/forest-camp-evening/v3/models/lantern-01-low.glb",
+        bytes: 867_708,
+        sha256: "60df83c65b8368ddb49e5a898caaf8a053a33f3c8e4909820454c4fb91f02639",
+      },
+      {
+        key: "model-lantern",
+        url: "/scenes/forest-camp-evening/v3/models/lantern-01.glb",
+        bytes: 2_182_772,
+        sha256: "20257bdde2d3c928d329cda19c0272057a2aafce1e62b1cca61391d156702356",
+      },
+      {
+        key: "model-tent",
+        url: "/scenes/forest-camp-evening/v3/models/kenney-tent.glb",
+        bytes: 19_444,
+        sha256: "633eeff968f46eae534ff6b003c0d5dbf46f151f93cb5c186b5be8b9449eb2be",
+      },
+      {
+        key: "table-shadow",
+        url: "/scenes/forest-camp-evening/v3/lighting/table-shadow.png",
+        bytes: 52_479,
+        sha256: "f02241c4efbd8f8be78aae082f1070c5170bcf072e6756ae7f5d8f627b00902e",
+      },
+      curvedCupV3ContactAo,
+    ],
+    qualityAssets: {
+      low: {
+        environmentKey: "environment-1k",
+        textureKeys: [],
+        modelKeys: { tableSet: "model-table-set-low", lantern: "model-lantern-low", tent: "model-tent" },
+      },
+      medium: {
+        environmentKey: "environment-1k",
+        textureKeys: [],
+        modelKeys: { tableSet: "model-table-set", lantern: "model-lantern", tent: "model-tent" },
+      },
+      high: {
+        environmentKey: "environment-2k",
+        textureKeys: [],
+        modelKeys: { tableSet: "model-table-set", lantern: "model-lantern", tent: "model-tent" },
+      },
+    },
+    visual: {
+      background: { mode: "environment", color: "#1e261e", blur: 0.08, intensity: 0.8, rotationY: 0.78 },
+      lighting: {
+        ambientIntensity: 0.3,
+        environmentIntensity: 0.88,
+        heroPosition: [0.28, 0.5, -0.42],
+        heroColor: "#ffd394",
+        heroIntensity: 2.25,
+      },
+      subject: { printAmbient: 0.56 },
+      tableShadow: {
+        assetKey: "table-shadow",
+        opacity: 0.6,
+        size: [0.48, 0.36],
+        offset: [0, 0],
+        rotation: 0,
+      },
+    },
+    renderContract: {
+      geometryVersion: "cc0-game-ready-near-mid-meshopt-v3",
+      rendererVersion: "reflective-subject-glsl3-v3",
+      environmentPipelineVersion: "equirectangular-pmrem-idle-lru-v2",
+      shadowPipelineVersion: "cycles-planar-decal-v3",
     },
   },
 ] as const satisfies readonly SceneRelease[];
